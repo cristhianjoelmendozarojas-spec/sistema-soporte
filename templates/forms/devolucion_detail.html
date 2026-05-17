@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}Acta {{ devolucion.codigo }}{% endblock %}
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between">
+        <h4>Acta de Devolucion: {{ devolucion.codigo }}</h4>
+        <a href="{% url 'forms:devolucion_list' %}" class="btn btn-secondary btn-sm">Volver</a>
+    </div>
+    <div class="card-body">
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <p><strong>Empleado:</strong> {{ devolucion.employee.apellido }}, {{ devolucion.employee.nombre }}</p>
+                <p><strong>Cedula:</strong> {{ devolucion.employee.cedula }}</p>
+                <p><strong>Asignacion Relacionada:</strong> {{ devolucion.asignacion.codigo|default:"-" }}</p>
+                <p><strong>Prestamo Relacionado:</strong> {{ devolucion.prestamo.codigo|default:"-" }}</p>
+            </div>
+            <div class="col-md-6">
+                <p><strong>Fecha de Devolucion:</strong> {{ devolucion.fecha_devolucion }}</p>
+                <p><strong>Creado por:</strong> {{ devolucion.created_by.username }}</p>
+                {% if devolucion.observaciones %}
+                <p><strong>Observaciones:</strong> {{ devolucion.observaciones }}</p>
+                {% endif %}
+            </div>
+        </div>
+        <h5>Equipos Devueltos</h5>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Codigo Patrimonial</th>
+                    <th>Equipo</th>
+                    <th>Serie</th>
+                    <th>Estado Recibido</th>
+                    <th>Observaciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in detalles %}
+                <tr>
+                    <td>{{ d.equipment.codigo_patrimonial }}</td>
+                    <td>{{ d.equipment.marca }} {{ d.equipment.modelo }}</td>
+                    <td>{{ d.equipment.numero_serie }}</td>
+                    <td>{{ d.get_estado_recibido_display }}</td>
+                    <td>{{ d.observaciones|default:"-" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

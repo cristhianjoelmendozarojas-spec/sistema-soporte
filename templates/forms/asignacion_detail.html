@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}Acta {{ asignacion.codigo }}{% endblock %}
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between">
+        <h4>Acta de Asignacion: {{ asignacion.codigo }}</h4>
+        <a href="{% url 'forms:asignacion_list' %}" class="btn btn-secondary btn-sm">Volver</a>
+    </div>
+    <div class="card-body">
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <p><strong>Empleado:</strong> {{ asignacion.employee.apellido }}, {{ asignacion.employee.nombre }}</p>
+                <p><strong>Cedula:</strong> {{ asignacion.employee.cedula }}</p>
+                <p><strong>Cargo:</strong> {{ asignacion.employee.cargo }}</p>
+                <p><strong>Departamento:</strong> {{ asignacion.employee.departamento }}</p>
+            </div>
+            <div class="col-md-6">
+                <p><strong>Fecha de Asignacion:</strong> {{ asignacion.fecha_asignacion }}</p>
+                <p><strong>Creado por:</strong> {{ asignacion.created_by.username }}</p>
+                <p><strong>Motivo:</strong> {{ asignacion.motivo }}</p>
+                {% if asignacion.observaciones %}
+                <p><strong>Observaciones:</strong> {{ asignacion.observaciones }}</p>
+                {% endif %}
+            </div>
+        </div>
+        <h5>Equipos Asignados</h5>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Codigo Patrimonial</th>
+                    <th>Equipo</th>
+                    <th>Serie</th>
+                    <th>Estado Entrega</th>
+                    <th>Observaciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in detalles %}
+                <tr>
+                    <td>{{ d.equipment.codigo_patrimonial }}</td>
+                    <td>{{ d.equipment.marca }} {{ d.equipment.modelo }}</td>
+                    <td>{{ d.equipment.numero_serie }}</td>
+                    <td>{{ d.get_estado_entrega_display }}</td>
+                    <td>{{ d.observaciones|default:"-" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

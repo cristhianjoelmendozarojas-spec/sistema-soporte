@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}Actas de Asignacion{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Actas de Asignacion</h2>
+    <a href="{% url 'forms:asignacion_create' %}" class="btn btn-primary">Nueva Asignacion</a>
+</div>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Codigo</th>
+            <th>Empleado</th>
+            <th>Fecha</th>
+            <th>Creado por</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for a in asignaciones %}
+        <tr>
+            <td>{{ a.codigo }}</td>
+            <td>{{ a.employee.apellido }}, {{ a.employee.nombre }}</td>
+            <td>{{ a.fecha_asignacion }}</td>
+            <td>{{ a.created_by.username }}</td>
+            <td><a href="{% url 'forms:asignacion_detail' a.pk %}" class="btn btn-sm btn-info">Ver</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="text-center">No hay actas de asignacion registradas.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
