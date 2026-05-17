@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block title %}{{ titulo }}{% endblock %}
+{% block topbar_title %}{{ titulo }}{% endblock %}
+{% block topbar_actions %}
+<a href="{% url 'employees:employee_list' %}" class="btn btn-outline btn-sm">← Volver</a>
+{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-label">Colaboradores</div>
+    <h1 class="page-title">{{ titulo }}</h1>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">{{ titulo }}</div>
+  <div class="card-body">
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Cedula / DNI</label>
+          <input type="text" name="cedula" class="form-control" value="{{ employee_obj.cedula|default:'' }}" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Apellidos</label>
+          <input type="text" name="apellido" class="form-control" value="{{ employee_obj.apellido|default:'' }}" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nombres</label>
+          <input type="text" name="nombre" class="form-control" value="{{ employee_obj.nombre|default:'' }}" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Cargo</label>
+          <input type="text" name="cargo" class="form-control" value="{{ employee_obj.cargo|default:'' }}" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Departamento / Area</label>
+          <input type="text" name="departamento" class="form-control" value="{{ employee_obj.departamento|default:'' }}" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Telefono</label>
+          <input type="text" name="telefono" class="form-control" value="{{ employee_obj.telefono|default:'' }}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" name="email" class="form-control" value="{{ employee_obj.email|default:'' }}">
+        </div>
+        {% if employee_obj %}
+        <div class="form-group">
+          <label class="form-label">Estado</label>
+          <label style="display:flex;align-items:center;gap:.35rem;font-size:.78rem;cursor:pointer;">
+            <input type="checkbox" name="activo" {% if employee_obj.activo %}checked{% endif %}>
+            Colaborador activo
+          </label>
+        </div>
+        {% endif %}
+      </div>
+
+      <div style="margin-top:1.25rem;display:flex;gap:.5rem;">
+        <button type="submit" class="btn btn-primary">Guardar</button>
+        <a href="{% url 'employees:employee_list' %}" class="btn btn-outline">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

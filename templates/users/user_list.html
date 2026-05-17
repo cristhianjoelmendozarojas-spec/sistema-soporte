@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block title %}Usuarios{% endblock %}
+{% block topbar_title %}Usuarios{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-label">Administracion</div>
+    <h1 class="page-title">Usuarios</h1>
+  </div>
+  <a href="{% url 'users:user_create' %}" class="btn btn-primary btn-sm">+ Nuevo Usuario</a>
+</div>
+
+<div class="card">
+  <div class="card-header">Listado de Usuarios</div>
+  <div class="card-body" style="padding:0;">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>DNI</th>
+            <th>Nombre</th>
+            <th>Email</th>
+            <th>Rol</th>
+            <th>Modulos</th>
+            <th>Staff</th>
+            <th style="text-align:center;">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+          <tr>
+            <td><strong>{{ u.username }}</strong></td>
+            <td>{{ u.get_full_name|default:"-" }}</td>
+            <td>{{ u.email|default:"-" }}</td>
+            <td><span class="badge {% if u.profile.rol == 'admin' %}badge-blue{% else %}badge-gray{% endif %}">{{ u.profile.get_rol_display }}</span></td>
+            <td>
+              {% for m in u.profile.modulos.all %}
+                <span class="badge badge-green" style="margin:1px;">{{ m.nombre }}</span>
+              {% empty %}
+                <span style="color:var(--text-light);font-size:.7rem;">-</span>
+              {% endfor %}
+            </td>
+            <td>{% if u.is_staff %}<span class="badge badge-yellow">Si</span>{% else %}<span style="color:var(--text-light);font-size:.7rem;">No</span>{% endif %}</td>
+            <td class="td-center">
+              <a href="{% url 'users:user_edit' u.pk %}" class="btn btn-primary btn-sm">Editar</a>
+              <a href="{% url 'users:user_delete' u.pk %}" class="btn btn-danger btn-sm">Eliminar</a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" style="text-align:center;color:var(--text-light);padding:1.5rem;">No hay usuarios registrados.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

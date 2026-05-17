@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block title %}Colaboradores{% endblock %}
+{% block topbar_title %}Colaboradores{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-label">Registro</div>
+    <h1 class="page-title">Colaboradores</h1>
+  </div>
+  <a href="{% url 'employees:employee_create' %}" class="btn btn-primary btn-sm">+ Nuevo Colaborador</a>
+</div>
+
+<div class="card">
+  <div class="card-header">Listado de Colaboradores</div>
+  <div class="card-body" style="padding:0;">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Cedula</th>
+            <th>Apellidos</th>
+            <th>Nombres</th>
+            <th>Cargo</th>
+            <th>Departamento</th>
+            <th>Telefono</th>
+            <th>Email</th>
+            <th>Estado</th>
+            <th style="text-align:center;">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for emp in employees %}
+          <tr>
+            <td><strong>{{ emp.cedula }}</strong></td>
+            <td>{{ emp.apellido }}</td>
+            <td>{{ emp.nombre }}</td>
+            <td>{{ emp.cargo }}</td>
+            <td>{{ emp.departamento }}</td>
+            <td>{{ emp.telefono|default:"-" }}</td>
+            <td>{{ emp.email|default:"-" }}</td>
+            <td>{% if emp.activo %}<span class="badge badge-green">Activo</span>{% else %}<span class="badge badge-red">Inactivo</span>{% endif %}</td>
+            <td class="td-center">
+              <a href="{% url 'employees:employee_edit' emp.pk %}" class="btn btn-primary btn-sm">Editar</a>
+              <a href="{% url 'employees:employee_delete' emp.pk %}" class="btn btn-danger btn-sm">Eliminar</a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="9" style="text-align:center;color:var(--text-light);padding:1.5rem;">No hay colaboradores registrados.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

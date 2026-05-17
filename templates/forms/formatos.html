@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block topbar_title %}Formatos{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-label">Modulo</div>
+    <h1 class="page-title">Formatos</h1>
+  </div>
+  <a href="{% url 'forms:asignacion_create' %}" class="btn btn-primary btn-sm">+ Nuevo Formato</a>
+</div>
+
+<div class="card-grid">
+  <div class="card-option">
+    <div class="card-icon">📝</div>
+    <h3>ASIGNACION</h3>
+    <p>Gestion de actas de asignacion de equipos</p>
+    <div class="actions">
+      <a href="{% url 'forms:asignacion_list' %}" class="btn btn-outline btn-sm">Ver</a>
+      <a href="{% url 'forms:asignacion_create' %}" class="btn btn-primary btn-sm">Nueva</a>
+    </div>
+  </div>
+  <div class="card-option">
+    <div class="card-icon">📤</div>
+    <h3>PRESTAMOS</h3>
+    <p>Gestion de actas de prestamo de equipos</p>
+    <div class="actions">
+      <a href="{% url 'forms:prestamo_list' %}" class="btn btn-outline btn-sm">Ver</a>
+      <a href="{% url 'forms:prestamo_create' %}" class="btn btn-primary btn-sm">Nuevo</a>
+    </div>
+  </div>
+  <div class="card-option">
+    <div class="card-icon">📥</div>
+    <h3>DEVOLUCION</h3>
+    <p>Gestion de actas de devolucion de equipos</p>
+    <div class="actions">
+      <a href="{% url 'forms:devolucion_list' %}" class="btn btn-outline btn-sm">Ver</a>
+      <a href="{% url 'forms:devolucion_create' %}" class="btn btn-primary btn-sm">Nueva</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,51 +1,228 @@
 {% extends 'base.html' %}
 {% block title %}Acta {{ asignacion.codigo }}{% endblock %}
+{% block topbar_title %}Asignacion {{ asignacion.codigo }}{% endblock %}
+{% block topbar_actions %}
+<a href="{% url 'forms:asignacion_list' %}" class="btn btn-outline btn-sm">← Volver</a>
+{% endblock %}
 {% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-label">Acta de Asignacion</div>
+    <h1 class="page-title">{{ asignacion.codigo }}</h1>
+  </div>
+  <div style="display:flex;gap:.4rem;">
+    <a href="{% url 'forms:asignacion_pdf' asignacion.pk %}" class="btn btn-primary btn-sm">⬇ PDF</a>
+    <a href="{% url 'forms:asignacion_edit' asignacion.pk %}" class="btn btn-outline btn-sm">Editar</a>
+    <button type="button" class="btn btn-danger btn-sm btn-delete" data-pk="{{ asignacion.pk }}" data-codigo="{{ asignacion.codigo }}">Eliminar</button>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom:1.25rem;">
+  <div class="card-header">Datos de la Asignacion</div>
+  <div class="card-body">
+    <div class="info-grid">
+      <div class="info-item">
+        <span class="info-label">Empleado</span>
+        <span class="info-value">{{ asignacion.employee.apellido }}, {{ asignacion.employee.nombre }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Cedula</span>
+        <span class="info-value">{{ asignacion.employee.cedula }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Cargo</span>
+        <span class="info-value">{{ asignacion.employee.cargo }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Departamento</span>
+        <span class="info-value">{{ asignacion.employee.departamento }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Tipo de Equipo</span>
+        <span class="info-value">{{ asignacion.get_tipo_equipo_display }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Fecha de Asignacion</span>
+        <span class="info-value">{{ asignacion.fecha_asignacion }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Creado por</span>
+        <span class="info-value">{{ asignacion.created_by.username }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Motivo</span>
+        <span class="info-value">{{ asignacion.motivo }}</span>
+      </div>
+      {% if asignacion.observaciones %}
+      <div class="info-item">
+        <span class="info-label">Observaciones</span>
+        <span class="info-value">{{ asignacion.observaciones }}</span>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
 <div class="card">
-    <div class="card-header d-flex justify-content-between">
-        <h4>Acta de Asignacion: {{ asignacion.codigo }}</h4>
-        <a href="{% url 'forms:asignacion_list' %}" class="btn btn-secondary btn-sm">Volver</a>
+  <div class="card-header">Equipos Asignados</div>
+  <div class="card-body" style="padding:0;">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Codigo Patrimonial</th>
+            <th>Equipo</th>
+            <th>Serie</th>
+            <th>Estado Entrega</th>
+            <th>Observaciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in detalles %}
+          <tr>
+            <td><strong>{{ d.equipment.codigo_patrimonial }}</strong></td>
+            <td>{{ d.equipment.marca }} {{ d.equipment.modelo }}</td>
+            <td>{{ d.equipment.numero_serie }}</td>
+            <td><span class="badge badge-blue">{{ d.get_estado_entrega_display }}</span></td>
+            <td>{{ d.observaciones|default:"-" }}</td>
+          </tr>
+
+          <!-- Componentes detail for each detail -->
+          {% if d.componentes_data %}
+          <tr>
+            <td colspan="5" style="padding:0;">
+              <table style="width:100%;border-collapse:collapse;font-size:.73rem;background:var(--surface-section);">
+                <thead>
+                  {% if d.tipo_equipo == 'pc' %}
+                  <tr>
+                    <th style="padding:.35rem .6rem;font-size:.6rem;">Componente</th>
+                    <th style="padding:.35rem .6rem;font-size:.6rem;">Marca</th>
+                    <th style="padding:.35rem .6rem;font-size:.6rem;">Modelo</th>
+                    <th style="padding:.35rem .6rem;font-size:.6rem;">Capacidad</th>
+                    <th style="padding:.35rem .6rem;font-size:.6rem;">Serie</th>
+                    <th style="padding:.35rem .6rem;font-size:.6rem;">Estado</th>
+                  </tr>
+                  {% elif d.tipo_equipo == 'laptop' %}
+                  <tr>
+                    <th style="padding:.35rem .6rem;font-size:.6rem;">Componente</th>
+                    <th style="padding:.35rem .6rem;font-size:.6rem;">Marca</th>
+                    <th style="padding:.35rem .6rem;font-size:.6rem;">Modelo</th>
+                    <th style="padding:.35rem .6rem;font-size:.6rem;">SSD</th>
+                    <th style="padding:.35rem .6rem;font-size:.6rem;">HDD</th>
+                    <th style="padding:.35rem .6rem;font-size:.6rem;">Memoria RAM</th>
+                    <th style="padding:.35rem .6rem;font-size:.6rem;">Serie</th>
+                    <th style="padding:.35rem .6rem;font-size:.6rem;">Estado</th>
+                  </tr>
+                  {% else %}
+                  <tr>
+                    <th style="padding:.35rem .6rem;font-size:.6rem;">Componente</th>
+                    <th style="padding:.35rem .6rem;font-size:.6rem;">Marca</th>
+                    <th style="padding:.35rem .6rem;font-size:.6rem;">Modelo</th>
+                    <th style="padding:.35rem .6rem;font-size:.6rem;">Serie</th>
+                    <th style="padding:.35rem .6rem;font-size:.6rem;">Estado</th>
+                  </tr>
+                  {% endif %}
+                </thead>
+                <tbody>
+                  {% for c in d.componentes_data %}
+                  {% if d.tipo_equipo == 'pc' %}
+                  <tr>
+                    <td style="padding:.25rem .6rem;border-bottom:1px solid var(--surface-border);font-weight:600;">{{ c.nombre }}</td>
+                    <td style="padding:.25rem .6rem;border-bottom:1px solid var(--surface-border);">{{ c.marca|default:"-" }}</td>
+                    <td style="padding:.25rem .6rem;border-bottom:1px solid var(--surface-border);">{{ c.modelo|default:"-" }}</td>
+                    <td style="padding:.25rem .6rem;border-bottom:1px solid var(--surface-border);">{{ c.capacidad|default:"-" }}</td>
+                    <td style="padding:.25rem .6rem;border-bottom:1px solid var(--surface-border);">{{ c.serie|default:"-" }}</td>
+                    <td style="padding:.25rem .6rem;border-bottom:1px solid var(--surface-border);">
+                      {% if c.estado %}
+                        <span class="badge {% if c.estado == 'OPERATIVO' %}badge-green{% elif c.estado == 'MALO' %}badge-red{% else %}badge-yellow{% endif %}">{{ c.estado }}</span>
+                      {% else %}
+                        -
+                      {% endif %}
+                    </td>
+                  </tr>
+                  {% elif d.tipo_equipo == 'laptop' %}
+                  <tr>
+                    <td style="padding:.25rem .6rem;border-bottom:1px solid var(--surface-border);font-weight:600;">{{ c.nombre }}</td>
+                    <td style="padding:.25rem .6rem;border-bottom:1px solid var(--surface-border);">{{ c.marca|default:"-" }}</td>
+                    <td style="padding:.25rem .6rem;border-bottom:1px solid var(--surface-border);">{{ c.modelo|default:"-" }}</td>
+                    <td style="padding:.25rem .6rem;border-bottom:1px solid var(--surface-border);">{{ c.ssd|default:"-" }}</td>
+                    <td style="padding:.25rem .6rem;border-bottom:1px solid var(--surface-border);">{{ c.hdd|default:"-" }}</td>
+                    <td style="padding:.25rem .6rem;border-bottom:1px solid var(--surface-border);">{{ c.memoria_ram|default:"-" }}</td>
+                    <td style="padding:.25rem .6rem;border-bottom:1px solid var(--surface-border);">{{ c.serie|default:"-" }}</td>
+                    <td style="padding:.25rem .6rem;border-bottom:1px solid var(--surface-border);">
+                      {% if c.estado %}
+                        <span class="badge {% if c.estado == 'OPERATIVO' %}badge-green{% elif c.estado == 'MALO' %}badge-red{% else %}badge-yellow{% endif %}">{{ c.estado }}</span>
+                      {% else %}
+                        -
+                      {% endif %}
+                    </td>
+                  </tr>
+                  {% else %}
+                  <tr>
+                    <td style="padding:.25rem .6rem;border-bottom:1px solid var(--surface-border);font-weight:600;">{{ c.nombre }}</td>
+                    <td style="padding:.25rem .6rem;border-bottom:1px solid var(--surface-border);">{{ c.marca|default:"-" }}</td>
+                    <td style="padding:.25rem .6rem;border-bottom:1px solid var(--surface-border);">{{ c.modelo|default:"-" }}</td>
+                    <td style="padding:.25rem .6rem;border-bottom:1px solid var(--surface-border);">{{ c.serie|default:"-" }}</td>
+                    <td style="padding:.25rem .6rem;border-bottom:1px solid var(--surface-border);">
+                      {% if c.estado %}
+                        <span class="badge {% if c.estado == 'OPERATIVO' %}badge-green{% elif c.estado == 'MALO' %}badge-red{% else %}badge-yellow{% endif %}">{{ c.estado }}</span>
+                      {% else %}
+                        -
+                      {% endif %}
+                    </td>
+                  </tr>
+                  {% endif %}
+                  {% endfor %}
+                </tbody>
+              </table>
+            </td>
+          </tr>
+          {% endif %}
+
+          {% empty %}
+          <tr>
+            <td colspan="5" style="text-align:center;color:var(--text-light);padding:1.5rem;">No hay equipos registrados.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
-    <div class="card-body">
-        <div class="row mb-3">
-            <div class="col-md-6">
-                <p><strong>Empleado:</strong> {{ asignacion.employee.apellido }}, {{ asignacion.employee.nombre }}</p>
-                <p><strong>Cedula:</strong> {{ asignacion.employee.cedula }}</p>
-                <p><strong>Cargo:</strong> {{ asignacion.employee.cargo }}</p>
-                <p><strong>Departamento:</strong> {{ asignacion.employee.departamento }}</p>
-            </div>
-            <div class="col-md-6">
-                <p><strong>Fecha de Asignacion:</strong> {{ asignacion.fecha_asignacion }}</p>
-                <p><strong>Creado por:</strong> {{ asignacion.created_by.username }}</p>
-                <p><strong>Motivo:</strong> {{ asignacion.motivo }}</p>
-                {% if asignacion.observaciones %}
-                <p><strong>Observaciones:</strong> {{ asignacion.observaciones }}</p>
-                {% endif %}
-            </div>
+  </div>
+</div>
+
+{% include 'forms/_delete_modal.html' %}
+
+<div class="card" style="margin-top:1.25rem;">
+  <div class="card-header">Firmas</div>
+  <div class="card-body">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;">
+      <div style="text-align:center;display:flex;flex-direction:column;">
+        <div style="flex:1;display:flex;align-items:center;justify-content:center;min-height:60px;"></div>
+        <div style="border-bottom:2px solid var(--surface-border);margin-bottom:.3rem;"></div>
+        <div style="font-size:.72rem;font-weight:600;color:var(--text-muted);">Firma del Colaborador</div>
+        <div style="font-size:.82rem;font-weight:700;color:var(--navy);">{{ asignacion.employee.apellido }}, {{ asignacion.employee.nombre }}</div>
+      </div>
+      <div style="text-align:center;display:flex;flex-direction:column;">
+        <div style="flex:1;display:flex;align-items:center;justify-content:center;min-height:60px;">
+          {% with firma=asignacion.created_by.firma %}
+          {% if firma.imagen %}
+          <img src="{{ firma.imagen.url }}" alt="Firma" style="max-height:45px;">
+          {% elif firma.datos_firma %}
+          <img src="{{ firma.datos_firma }}" alt="Firma" style="max-height:45px;">
+          {% endif %}
+          {% endwith %}
         </div>
-        <h5>Equipos Asignados</h5>
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th>Codigo Patrimonial</th>
-                    <th>Equipo</th>
-                    <th>Serie</th>
-                    <th>Estado Entrega</th>
-                    <th>Observaciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for d in detalles %}
-                <tr>
-                    <td>{{ d.equipment.codigo_patrimonial }}</td>
-                    <td>{{ d.equipment.marca }} {{ d.equipment.modelo }}</td>
-                    <td>{{ d.equipment.numero_serie }}</td>
-                    <td>{{ d.get_estado_entrega_display }}</td>
-                    <td>{{ d.observaciones|default:"-" }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div style="border-bottom:2px solid var(--surface-border);margin-bottom:.3rem;"></div>
+        <div style="font-size:.72rem;font-weight:600;color:var(--text-muted);">Soporte Tecnico</div>
+        <div style="font-size:.82rem;font-weight:700;color:var(--navy);">{{ asignacion.created_by.get_full_name|default:asignacion.created_by.username }}</div>
+      </div>
+      <div style="text-align:center;display:flex;flex-direction:column;">
+        <div style="flex:1;display:flex;align-items:center;justify-content:center;min-height:60px;"></div>
+        <div style="border-bottom:2px solid var(--surface-border);margin-bottom:.3rem;"></div>
+        <div style="font-size:.72rem;font-weight:600;color:var(--text-muted);">Coordinador TI</div>
+        <div style="font-size:.82rem;font-weight:700;color:var(--navy);">Prueba</div>
+      </div>
     </div>
+  </div>
 </div>
 {% endblock %}

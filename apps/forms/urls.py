@@ -5,9 +5,13 @@ app_name = 'forms'
 
 urlpatterns = [
     path('', views.index, name='index'),
+    path('formatos/', views.formatos, name='formatos'),
     path('asignaciones/', views.asignacion_list, name='asignacion_list'),
     path('asignaciones/nueva/', views.asignacion_create, name='asignacion_create'),
     path('asignaciones/<int:pk>/', views.asignacion_detail, name='asignacion_detail'),
+    path('asignaciones/<int:pk>/editar/', views.asignacion_edit, name='asignacion_edit'),
+    path('asignaciones/<int:pk>/eliminar/', views.asignacion_delete, name='asignacion_delete'),
+    path('asignaciones/<int:pk>/pdf/', views.asignacion_pdf, name='asignacion_pdf'),
     path('prestamos/', views.prestamo_list, name='prestamo_list'),
     path('prestamos/nuevo/', views.prestamo_create, name='prestamo_create'),
     path('prestamos/<int:pk>/', views.prestamo_detail, name='prestamo_detail'),

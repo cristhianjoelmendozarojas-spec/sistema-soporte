@@ -1,13 +1,508 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}{{ titulo }}{% endblock %}
+{% block topbar_title %}{{ titulo }}{% endblock %}
+{% block topbar_actions %}
+<a href="{% url 'forms:asignacion_list' %}" class="btn btn-outline btn-sm">← Volver</a>
+{% endblock %}
 {% block content %}
-<h2>{{ titulo }}</h2>
-<form method="post" class="card card-body">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <div>
-        <button type="submit" class="btn btn-primary">Guardar</button>
-        <a href="{% url 'forms:asignacion_list' %}" class="btn btn-secondary">Cancelar</a>
+<div class="page-header">
+  <div>
+    <div class="page-label">Asignaciones</div>
+    <h1 class="page-title">{{ titulo }}
+      <span class="codigo-badge">{{ codigo_siguiente }}</span>
+      <span style="font-size:.65rem;font-weight:500;color:var(--text-muted);margin-left:.5rem;">
+        <span id="display-fecha"></span>
+        <input type="hidden" name="fecha_asignacion" id="hidden-fecha" value="{{ fecha_actual }}">
+      </span>
+    </h1>
+  </div>
+</div>
+
+<form method="post" id="form-asignacion">
+  {% csrf_token %}
+  <div style="display:none;">{{ form.employee }}{{ form.fecha_asignacion }}</div>
+
+  <div style="display:flex;gap:.8rem;margin-bottom:1rem;">
+  <!-- CARD 01 - TIPO DE EQUIPO -->
+  <div class="card" style="flex:1;margin-bottom:0;">
+    <div class="card-header" style="padding:.45rem .8rem;font-size:.72rem;">🖥️ Tipo de Equipo</div>
+    <div class="card-body" style="padding:.6rem .8rem;">
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+        <label class="tipo-cb" style="padding:.35rem .6rem;font-size:.75rem;">
+          <input type="checkbox" name="tipo_equipo" value="pc" {% if edit_mode and asignacion.tipo_equipo == 'pc' %}checked{% endif %}>
+          <span class="tipo-cb-label">PC</span>
+        </label>
+        <label class="tipo-cb" style="padding:.35rem .6rem;font-size:.75rem;">
+          <input type="checkbox" name="tipo_equipo" value="laptop" {% if edit_mode and asignacion.tipo_equipo == 'laptop' %}checked{% endif %}>
+          <span class="tipo-cb-label">Laptop</span>
+        </label>
+        <label class="tipo-cb" style="padding:.35rem .6rem;font-size:.75rem;">
+          <input type="checkbox" name="tipo_equipo" value="impresora" {% if edit_mode and asignacion.tipo_equipo == 'impresora' %}checked{% endif %}>
+          <span class="tipo-cb-label">Impresora</span>
+        </label>
+        <label class="tipo-cb" style="padding:.35rem .6rem;font-size:.75rem;">
+          <input type="checkbox" name="tipo_equipo" value="perifericos" {% if edit_mode and asignacion.tipo_equipo == 'perifericos' %}checked{% endif %}>
+          <span class="tipo-cb-label">Perifericos</span>
+        </label>
+      </div>
     </div>
+  </div>
+
+  <!-- CARD 02 - COLABORADOR -->
+  <div class="card" style="flex:2;margin-bottom:0;overflow:visible;">
+    <div class="card-header" style="padding:.45rem .8rem;font-size:.72rem;">👤 Datos del Colaborador</div>
+    <div class="card-body" style="padding:.6rem .8rem;">
+      <div class="form-grid" style="gap:.5rem;">
+        <div class="form-group" style="position:relative;">
+          <label class="form-label" style="font-size:.6rem;">Colaborador</label>
+          <div style="display:flex;gap:.3rem;">
+            <input type="text" id="employee-search" class="form-control" placeholder="Escriba para buscar o registrar..." autocomplete="off" style="flex:1;font-size:.75rem;padding:.35rem .5rem;">
+            <button type="button" id="btn-new-employee" class="btn btn-primary btn-sm" title="Registrar nuevo colaborador" style="white-space:nowrap;font-size:.72rem;padding:.35rem .6rem;">+ Nuevo</button>
+          </div>
+          <input type="hidden" name="employee_id" id="employee-id" value="">
+          <div id="employee-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--surface-border);border-radius:var(--radius-sm);z-index:99999;max-height:220px;overflow-y:auto;box-shadow:var(--shadow-md);"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" style="font-size:.6rem;">Cargo</label>
+          <input type="text" id="empleado-cargo" class="form-control" readonly style="background:var(--surface-section);font-size:.75rem;padding:.35rem .5rem;">
+        </div>
+        <div class="form-group">
+          <label class="form-label" style="font-size:.6rem;">Area / Departamento</label>
+          <input type="text" id="empleado-area" class="form-control" readonly style="background:var(--surface-section);font-size:.75rem;padding:.35rem .5rem;">
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <!-- CARD 03 - COMPONENTES (one section per type) -->
+  <div class="card" style="margin-bottom:1rem;">
+    <div class="card-header">🔧 Componentes del Equipo</div>
+
+    {% for tipo_key, tipo_label, comp_list in tipo_sections %}
+    <div class="comp-section" data-tipo="{{ tipo_key }}" style="display:none;">
+      <div style="padding:.5rem 1rem;background:var(--surface-section);border-bottom:1px solid var(--surface-border);font-size:.75rem;font-weight:600;color:var(--navy);">{{ tipo_label }}</div>
+      <div class="card-body" style="padding:0;">
+        <div class="table-wrap">
+          <table class="tabla-componentes">
+            <thead>
+              {% if tipo_key == 'pc' %}
+              <tr>
+                <th style="width:20%;">Componentes</th>
+                <th style="width:15%;">Marca</th>
+                <th style="width:15%;">Modelo</th>
+                <th style="width:15%;">Capacidad</th>
+                <th style="width:15%;">Serie</th>
+                <th style="width:15%;">Estado</th>
+              </tr>
+              {% elif tipo_key == 'laptop' %}
+              <tr>
+                <th style="width:16%;">Componentes</th>
+                <th style="width:12%;">Marca</th>
+                <th style="width:12%;">Modelo</th>
+                <th style="width:12%;">SSD</th>
+                <th style="width:12%;">HDD</th>
+                <th style="width:12%;">Memoria RAM</th>
+                <th style="width:12%;">Serie</th>
+                <th style="width:12%;">Estado</th>
+              </tr>
+              {% else %}
+              <tr>
+                <th style="width:25%;">Componentes</th>
+                <th style="width:20%;">Marca</th>
+                <th style="width:20%;">Modelo</th>
+                <th style="width:20%;">Serie</th>
+                <th style="width:15%;">Estado</th>
+              </tr>
+              {% endif %}
+            </thead>
+            <tbody>
+              {% for comp in comp_list %}
+              {% if tipo_key == 'pc' %}
+              <tr>
+                <td><strong>{{ comp }}</strong><input type="hidden" name="comp_nombre_{{ tipo_key }}" value="{{ comp }}"></td>
+                <td><input type="text" name="comp_marca_{{ tipo_key }}" class="form-control" style="padding:.3rem .5rem;font-size:.75rem;" placeholder="-"></td>
+                <td><input type="text" name="comp_modelo_{{ tipo_key }}" class="form-control" style="padding:.3rem .5rem;font-size:.75rem;" placeholder="-"></td>
+                <td><input type="text" name="comp_capacidad_{{ tipo_key }}" class="form-control" style="padding:.3rem .5rem;font-size:.75rem;" placeholder="-"></td>
+                <td><input type="text" name="comp_serie_{{ tipo_key }}" class="form-control" style="padding:.3rem .5rem;font-size:.75rem;" placeholder="-"></td>
+                <td>
+                  <select name="comp_estado_{{ tipo_key }}" class="form-control" style="padding:.3rem .5rem;font-size:.75rem;">
+                    <option value="">--</option>
+                    <option value="OPERATIVO">OPERATIVO</option>
+                    <option value="MALO">MALO</option>
+                    <option value="REGULAR">REGULAR</option>
+                  </select>
+                </td>
+              </tr>
+              {% elif tipo_key == 'laptop' %}
+              {% if comp == 'CARGADOR' %}
+              <tr>
+                <td><strong>{{ comp }}</strong><input type="hidden" name="comp_nombre_{{ tipo_key }}" value="{{ comp }}"></td>
+                <td><input type="text" name="comp_marca_{{ tipo_key }}" class="form-control" style="padding:.3rem .5rem;font-size:.75rem;" placeholder="-"></td>
+                <td><input type="text" name="comp_modelo_{{ tipo_key }}" class="form-control" style="padding:.3rem .5rem;font-size:.75rem;" placeholder="-"></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td><input type="text" name="comp_serie_{{ tipo_key }}" class="form-control" style="padding:.3rem .5rem;font-size:.75rem;" placeholder="-"></td>
+                <td>
+                  <select name="comp_estado_{{ tipo_key }}" class="form-control" style="padding:.3rem .5rem;font-size:.75rem;">
+                    <option value="">--</option>
+                    <option value="OPERATIVO">OPERATIVO</option>
+                    <option value="MALO">MALO</option>
+                    <option value="REGULAR">REGULAR</option>
+                  </select>
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td><strong>{{ comp }}</strong><input type="hidden" name="comp_nombre_{{ tipo_key }}" value="{{ comp }}"></td>
+                <td><input type="text" name="comp_marca_{{ tipo_key }}" class="form-control" style="padding:.3rem .5rem;font-size:.75rem;" placeholder="-"></td>
+                <td><input type="text" name="comp_modelo_{{ tipo_key }}" class="form-control" style="padding:.3rem .5rem;font-size:.75rem;" placeholder="-"></td>
+                <td><input type="text" name="comp_ssd_{{ tipo_key }}" class="form-control" style="padding:.3rem .5rem;font-size:.75rem;" placeholder="-"></td>
+                <td><input type="text" name="comp_hdd_{{ tipo_key }}" class="form-control" style="padding:.3rem .5rem;font-size:.75rem;" placeholder="-"></td>
+                <td><input type="text" name="comp_memoria_ram_{{ tipo_key }}" class="form-control" style="padding:.3rem .5rem;font-size:.75rem;" placeholder="-"></td>
+                <td><input type="text" name="comp_serie_{{ tipo_key }}" class="form-control" style="padding:.3rem .5rem;font-size:.75rem;" placeholder="-"></td>
+                <td>
+                  <select name="comp_estado_{{ tipo_key }}" class="form-control" style="padding:.3rem .5rem;font-size:.75rem;">
+                    <option value="">--</option>
+                    <option value="OPERATIVO">OPERATIVO</option>
+                    <option value="MALO">MALO</option>
+                    <option value="REGULAR">REGULAR</option>
+                  </select>
+                </td>
+              </tr>
+              {% endif %}
+              {% else %}
+              <tr>
+                <td><strong>{{ comp }}</strong><input type="hidden" name="comp_nombre_{{ tipo_key }}" value="{{ comp }}"></td>
+                <td><input type="text" name="comp_marca_{{ tipo_key }}" class="form-control" style="padding:.3rem .5rem;font-size:.75rem;" placeholder="-"></td>
+                <td><input type="text" name="comp_modelo_{{ tipo_key }}" class="form-control" style="padding:.3rem .5rem;font-size:.75rem;" placeholder="-"></td>
+                <td><input type="text" name="comp_serie_{{ tipo_key }}" class="form-control" style="padding:.3rem .5rem;font-size:.75rem;" placeholder="-"></td>
+                <td>
+                  <select name="comp_estado_{{ tipo_key }}" class="form-control" style="padding:.3rem .5rem;font-size:.75rem;">
+                    <option value="">--</option>
+                    <option value="OPERATIVO">OPERATIVO</option>
+                    <option value="MALO">MALO</option>
+                    <option value="REGULAR">REGULAR</option>
+                  </select>
+                </td>
+              </tr>
+              {% endif %}
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% if form.errors %}
+  <div class="card" style="margin-bottom:1rem;border-color:var(--red);">
+    <div class="card-body" style="color:var(--red);font-size:.78rem;">
+      <strong>Errores:</strong>
+      {{ form.errors }}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- CARD 04 - MOTIVO -->
+  <div class="card" style="margin-bottom:1rem;">
+    <div class="card-header">📝 Detalles de la Asignacion</div>
+    <div class="card-body">
+      <div class="form-grid">
+        <div class="form-group form-full">
+          <label class="form-label" for="id_motivo">Motivo <span style="color:var(--red);">*</span></label>
+          {{ form.motivo }}
+        </div>
+        <div class="form-group form-full">
+          <label class="form-label" for="id_observaciones">Observaciones</label>
+          {{ form.observaciones }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:.5rem;margin-top:1rem;">
+    <button type="submit" class="btn btn-primary">{% if edit_mode %}Guardar Cambios{% else %}Guardar Acta{% endif %}</button>
+    {% if edit_mode and asignacion %}
+    <button type="button" class="btn btn-danger btn-delete" data-pk="{{ asignacion.pk }}" data-codigo="{{ asignacion.codigo }}">Eliminar</button>
+    {% endif %}
+    <a href="{% url 'forms:asignacion_list' %}" class="btn btn-outline">Cancelar</a>
+  </div>
 </form>
+
+{% include 'forms/_delete_modal.html' %}
+
+<!-- MODAL NUEVO COLABORADOR -->
+<div id="modal-employee" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:var(--radius-lg);width:90%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg);padding:1.25rem;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.85rem;padding-bottom:.6rem;border-bottom:1px solid var(--surface-border);">
+      <h3 style="font-family:'Outfit',sans-serif;font-size:.95rem;font-weight:700;color:var(--navy);">Nuevo Colaborador</h3>
+      <button type="button" id="modal-close" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--text-muted);">&times;</button>
+    </div>
+    <div id="modal-body">
+      <div class="form-grid">
+        <div class="form-group form-full">
+          <label class="form-label">Nombre <span style="color:var(--red);">*</span></label>
+          <input type="text" id="modal-nombre" class="form-control" placeholder="Nombres" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Apellidos</label>
+          <input type="text" id="modal-apellido" class="form-control" placeholder="Apellidos">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Cedula / DNI</label>
+          <input type="text" id="modal-cedula" class="form-control" placeholder="Opcional">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Cargo</label>
+          <input type="text" id="modal-cargo" class="form-control" placeholder="Opcional">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Area / Departamento</label>
+          <input type="text" id="modal-departamento" class="form-control" placeholder="Opcional">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Telefono</label>
+          <input type="text" id="modal-telefono" class="form-control" placeholder="Opcional">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" id="modal-email" class="form-control" placeholder="Opcional">
+        </div>
+      </div>
+      <div id="modal-error" style="color:var(--red);font-size:.78rem;margin-top:.5rem;display:none;"></div>
+    </div>
+    <div style="display:flex;gap:.5rem;justify-content:flex-end;margin-top:1rem;padding-top:.75rem;border-top:1px solid var(--surface-border);">
+      <button type="button" id="modal-cancel" class="btn btn-outline">Cancelar</button>
+      <button type="button" id="modal-save" class="btn btn-primary">Guardar y Seleccionar</button>
+    </div>
+  </div>
+</div>
+
+<style>
+  .tabla-componentes { width:100%; border-collapse:collapse; font-size:.79rem; }
+  .tabla-componentes thead th {
+    background:var(--navy); color:#fff; font-weight:600;
+    padding:.5rem .6rem; text-align:left; font-size:.62rem;
+    letter-spacing:.06em; text-transform:uppercase;
+    border-bottom:2px solid var(--navy); white-space:nowrap;
+  }
+  .tabla-componentes tbody td {
+    padding:.35rem .4rem; border-bottom:1px solid var(--surface-border); vertical-align:middle;
+    background:#fff;
+  }
+  .tabla-componentes tbody tr:last-child td { border-bottom:none; }
+  .tabla-componentes tbody tr:hover td { background:var(--surface-hover); }
+  .codigo-badge {
+    display:inline-block;font-size:.55rem;background:var(--primary);color:#fff;
+    padding:.15rem .6rem;border-radius:999px;vertical-align:middle;margin-left:.5rem;
+    letter-spacing:.05em;font-weight:700;
+  }
+  #employee-dropdown .drop-item {
+    padding:.45rem .75rem;cursor:pointer;font-size:.78rem;border-bottom:1px solid var(--surface-border);transition:background .1s;
+  }
+  #employee-dropdown .drop-item:hover,
+  #employee-dropdown .drop-item.active {
+    background:var(--primary-light);color:var(--primary-dark);
+  }
+  #employee-dropdown .drop-item:last-child { border-bottom:none; }
+  #employee-dropdown .drop-item.drop-new {
+    color:var(--primary);font-weight:600;border-top:2px solid var(--primary-border);
+  }
+  .tipo-cb {
+    display:flex;align-items:center;gap:.4rem;cursor:pointer;
+    font-size:.82rem;font-weight:500;
+    padding:.55rem 1.1rem;
+    border:2px solid var(--surface-border);
+    border-radius:var(--radius);
+    transition:all .14s;
+    background:#fff;
+  }
+  .tipo-cb:hover { border-color:#adb5bd; }
+  .tipo-cb.checked { border-color:var(--primary); background:var(--primary-light); }
+  .tipo-cb input { accent-color:var(--primary); width:15px; height:15px; }
+  #id_motivo, #id_observaciones { padding:.44rem .72rem; border:1px solid var(--surface-border); border-radius:var(--radius-sm); font-family:'Inter',sans-serif; font-size:.8rem; color:var(--text); background:#fff; transition:border-color .14s,box-shadow .14s; width:100%; resize:vertical; min-height:70px; }
+  #id_motivo:focus, #id_observaciones:focus { outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(37,99,235,.12); }
+</style>
+
+<script>
+var EMPLOYEES = {{ employees_json|safe }};
+
+function getPeruDate() {
+  return new Date().toLocaleDateString('fr-CA', { timeZone: 'America/Lima' });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  // ── FECHA ──
+  var peruDate = getPeruDate();
+  var displayFecha = document.getElementById('display-fecha');
+  var hiddenFecha = document.getElementById('hidden-fecha');
+  if (hiddenFecha) hiddenFecha.value = peruDate;
+  if (displayFecha) {
+    var p = peruDate.split('-');
+    displayFecha.textContent = p[2] + ' ' + ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Set','Oct','Nov','Dic'][parseInt(p[1])-1] + ' ' + p[0];
+  }
+
+  // ── TIPO EQUIPO ──
+  var tipoCbs = document.querySelectorAll('.tipo-cb input[type="checkbox"]');
+  var cardComp = document.querySelector('.comp-section');
+  if (cardComp) cardComp = cardComp.closest('.card') || cardComp.parentNode;
+
+  function updateSections() {
+    var checked = [];
+    tipoCbs.forEach(function(cb) {
+      var lbl = cb.closest('.tipo-cb');
+      if (cb.checked) {
+        checked.push(cb.value);
+        if (lbl) lbl.classList.add('checked');
+      } else {
+        if (lbl) lbl.classList.remove('checked');
+      }
+    });
+    document.querySelectorAll('.comp-section').forEach(function(s) {
+      var show = checked.indexOf(s.dataset.tipo) > -1;
+      s.style.display = show ? 'block' : 'none';
+      if (show) cardComp.appendChild(s);
+    });
+  }
+  tipoCbs.forEach(function(cb) { cb.addEventListener('change', updateSections); });
+  updateSections();
+
+  // ── EMPLOYEE SEARCH ──
+  var searchInput = document.getElementById('employee-search');
+  var empIdInput = document.getElementById('employee-id');
+  var dropdown = document.getElementById('employee-dropdown');
+  var cargoInput = document.getElementById('empleado-cargo');
+  var areaInput = document.getElementById('empleado-area');
+  var modal = document.getElementById('modal-employee');
+
+  function selectEmployee(emp) {
+    empIdInput.value = emp.id;
+    searchInput.value = (emp.apellido ? emp.apellido + ', ' : '') + emp.nombre;
+    cargoInput.value = emp.cargo || '';
+    areaInput.value = emp.departamento || '';
+    dropdown.style.display = 'none';
+  }
+
+  function renderDropdown(q) {
+    if (!q.trim()) { dropdown.style.display = 'none'; return; }
+    var term = q.toLowerCase().trim();
+    var matches = EMPLOYEES.filter(function(e) {
+      return (e.nombre + ' ' + e.apellido + ' ' + (e.cedula||'') + ' ' + (e.cargo||'') + ' ' + (e.departamento||'')).toLowerCase().indexOf(term) > -1;
+    });
+    var html = matches.map(function(emp) {
+      return '<div class="drop-item" data-id="' + emp.id + '" data-nombre="' + emp.nombre + '" data-apellido="' + (emp.apellido||'') + '" data-cargo="' + (emp.cargo||'') + '" data-departamento="' + (emp.departamento||'') + '">' +
+        '<strong>' + (emp.apellido ? emp.apellido + ', ' : '') + emp.nombre + '</strong>' +
+        (emp.cedula ? ' <span style="color:var(--text-muted);font-size:.65rem;">(' + emp.cedula + ')</span>' : '') +
+        '<br><span style="color:var(--text-muted);font-size:.68rem;">' + (emp.cargo || '') + (emp.cargo && emp.departamento ? ' &middot; ' : '') + (emp.departamento || '') + '</span></div>';
+    }).join('');
+    html += '<div class="drop-item drop-new">+ Registrar "<strong>' + q + '</strong>" como nuevo colaborador</div>';
+    dropdown.innerHTML = html;
+    dropdown.style.display = 'block';
+  }
+
+  // Event delegation for dropdown clicks
+  dropdown.addEventListener('click', function(e) {
+    var item = e.target.closest('.drop-item');
+    if (!item) return;
+    if (item.classList.contains('drop-new')) {
+      dropdown.style.display = 'none';
+      openModal(searchInput.value);
+    } else {
+      selectEmployee({
+        id: parseInt(item.dataset.id),
+        nombre: item.dataset.nombre,
+        apellido: item.dataset.apellido,
+        cargo: item.dataset.cargo,
+        departamento: item.dataset.departamento,
+      });
+    }
+  });
+
+  // Debounced search
+  var searchTimer;
+  searchInput.addEventListener('input', function() {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(renderDropdown.bind(null, this.value), 200);
+  });
+  searchInput.addEventListener('focus', function() { if (this.value.trim()) renderDropdown(this.value); });
+  document.addEventListener('click', function(e) {
+    if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) dropdown.style.display = 'none';
+  });
+  searchInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') dropdown.style.display = 'none';
+  });
+
+  // ── MODAL ──
+  document.getElementById('btn-new-employee').addEventListener('click', function() { openModal(searchInput.value); });
+
+  function openModal(prefill) {
+    modal.style.display = 'flex';
+    if (prefill) document.getElementById('modal-nombre').value = prefill;
+    document.getElementById('modal-error').style.display = 'none';
+  }
+
+  function closeModal() {
+    modal.style.display = 'none';
+    ['nombre','apellido','cedula','cargo','departamento','telefono','email'].forEach(function(f) { document.getElementById('modal-' + f).value = ''; });
+    document.getElementById('modal-error').style.display = 'none';
+  }
+
+  document.getElementById('modal-close').addEventListener('click', closeModal);
+  document.getElementById('modal-cancel').addEventListener('click', closeModal);
+  modal.addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+
+  document.getElementById('modal-save').addEventListener('click', function() {
+    var nombre = document.getElementById('modal-nombre').value.trim();
+    if (!nombre) {
+      document.getElementById('modal-error').textContent = 'El nombre es obligatorio.';
+      document.getElementById('modal-error').style.display = 'block';
+      return;
+    }
+    var fd = new FormData();
+    ['nombre','apellido','cedula','cargo','departamento','telefono','email'].forEach(function(f) {
+      fd.append(f, document.getElementById('modal-' + f).value.trim());
+    });
+    fd.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+    fetch('{% url "employees:employee_create_ajax" %}', { method: 'POST', body: fd })
+      .then(function(r) { return r.json().then(function(d) { if (!r.ok) throw new Error(d.error || 'Error'); return d; }); })
+      .then(function(emp) { EMPLOYEES.push(emp); selectEmployee(emp); closeModal(); })
+      .catch(function(err) {
+        document.getElementById('modal-error').textContent = err.message;
+        document.getElementById('modal-error').style.display = 'block';
+      });
+  });
+
+  // ── EDIT MODE ──
+  {% if edit_mode and asignacion %}
+  var emp = EMPLOYEES.find(function(e) { return e.id == {{ asignacion.employee.id }}; });
+  if (emp) selectEmployee(emp);
+  {% endif %}
+
+  var COMPONENTES_EXISTENTES = {% if componentes_json %}{{ componentes_json|safe }}{% else %}{}{% endif %};
+  Object.keys(COMPONENTES_EXISTENTES).forEach(function(tipo) {
+    var rows = document.querySelectorAll('.comp-section[data-tipo="' + tipo + '"] .tabla-componentes tbody tr');
+    COMPONENTES_EXISTENTES[tipo].forEach(function(comp, i) {
+      if (i >= rows.length) return;
+      var cels = rows[i].cells;
+      var inputs = rows[i].querySelectorAll('input, select');
+      inputs.forEach(function(inp) {
+        var n = inp.name || '';
+        if (n.endsWith('_marca_' + tipo)) inp.value = comp.marca || '';
+        else if (n.endsWith('_modelo_' + tipo)) inp.value = comp.modelo || '';
+        else if (n.endsWith('_capacidad_' + tipo)) inp.value = comp.capacidad || '';
+        else if (n.endsWith('_ssd_' + tipo)) inp.value = comp.ssd || '';
+        else if (n.endsWith('_hdd_' + tipo)) inp.value = comp.hdd || '';
+        else if (n.endsWith('_memoria_ram_' + tipo)) inp.value = comp.memoria_ram || '';
+        else if (n.endsWith('_serie_' + tipo)) inp.value = comp.serie || '';
+        else if (n.endsWith('_estado_' + tipo)) inp.value = comp.estado || '';
+      });
+    });
+  });
+});
+</script>
 {% endblock %}

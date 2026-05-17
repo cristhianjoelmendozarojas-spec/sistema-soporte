@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}Eliminar Usuario{% endblock %}
+{% block topbar_title %}Eliminar Usuario{% endblock %}
+{% block topbar_actions %}
+<a href="{% url 'users:user_list' %}" class="btn btn-outline btn-sm">← Volver</a>
+{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-label">Usuarios</div>
+    <h1 class="page-title">Confirmar Eliminacion</h1>
+  </div>
+</div>
+
+<div class="card" style="max-width:500px;">
+  <div class="card-header">Eliminar Usuario</div>
+  <div class="card-body" style="text-align:center;padding:2rem;">
+    <div style="font-size:2.5rem;margin-bottom:.75rem;">⚠️</div>
+    <p style="font-size:.9rem;font-weight:600;color:var(--navy);">¿Esta seguro de eliminar al usuario <strong>{{ user_obj.username }}</strong>?</p>
+    <p style="font-size:.75rem;color:var(--text-muted);margin-bottom:1.25rem;">Esta accion no se puede deshacer.</p>
+    <form method="post" style="display:flex;gap:.5rem;justify-content:center;">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Si, eliminar</button>
+      <a href="{% url 'users:user_list' %}" class="btn btn-outline">Cancelar</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

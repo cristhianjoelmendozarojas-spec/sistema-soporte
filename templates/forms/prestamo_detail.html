@@ -1,55 +1,108 @@
 {% extends 'base.html' %}
 {% block title %}Acta {{ prestamo.codigo }}{% endblock %}
+{% block topbar_title %}Prestamo {{ prestamo.codigo }}{% endblock %}
+{% block topbar_actions %}
+<a href="{% url 'forms:prestamo_list' %}" class="btn btn-outline btn-sm">← Volver</a>
+{% endblock %}
 {% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-label">Acta de Prestamo</div>
+    <h1 class="page-title">{{ prestamo.codigo }}</h1>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom:1.25rem;">
+  <div class="card-header">Datos del Prestamo</div>
+  <div class="card-body">
+    <div class="info-grid">
+      <div class="info-item">
+        <span class="info-label">Empleado</span>
+        <span class="info-value">{{ prestamo.employee.apellido }}, {{ prestamo.employee.nombre }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Cedula</span>
+        <span class="info-value">{{ prestamo.employee.cedula }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Cargo</span>
+        <span class="info-value">{{ prestamo.employee.cargo }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Departamento</span>
+        <span class="info-value">{{ prestamo.employee.departamento }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Fecha de Prestamo</span>
+        <span class="info-value">{{ prestamo.fecha_prestamo }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Fecha Prevista Devolucion</span>
+        <span class="info-value">{{ prestamo.fecha_prevista_devolucion }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Estado</span>
+        <span class="info-value">
+          <span class="badge {% if prestamo.estado == 'activo' %}badge-yellow{% elif prestamo.estado == 'devuelto' %}badge-green{% elif prestamo.estado == 'vencido' %}badge-red{% else %}badge-gray{% endif %}">{{ prestamo.get_estado_display }}</span>
+        </span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Creado por</span>
+        <span class="info-value">{{ prestamo.created_by.username }}</span>
+      </div>
+      <div class="info-item" style="grid-column:1/-1;">
+        <span class="info-label">Motivo</span>
+        <span class="info-value">{{ prestamo.motivo }}</span>
+      </div>
+      {% if prestamo.observaciones %}
+      <div class="info-item" style="grid-column:1/-1;">
+        <span class="info-label">Observaciones</span>
+        <span class="info-value">{{ prestamo.observaciones }}</span>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
 <div class="card">
-    <div class="card-header d-flex justify-content-between">
-        <h4>Acta de Prestamo: {{ prestamo.codigo }}</h4>
-        <a href="{% url 'forms:prestamo_list' %}" class="btn btn-secondary btn-sm">Volver</a>
+  <div class="card-header">Equipos en Prestamo</div>
+  <div class="card-body" style="padding:0;">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Codigo Patrimonial</th>
+            <th>Equipo</th>
+            <th>Serie</th>
+            <th>Estado Entrega</th>
+            <th>Devuelto</th>
+            <th>Estado Devolucion</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in detalles %}
+          <tr>
+            <td><strong>{{ d.equipment.codigo_patrimonial }}</strong></td>
+            <td>{{ d.equipment.marca }} {{ d.equipment.modelo }}</td>
+            <td>{{ d.equipment.numero_serie }}</td>
+            <td><span class="badge badge-blue">{{ d.get_estado_entrega_display }}</span></td>
+            <td>{{ d.fecha_devolucion|default:"-" }}</td>
+            <td>
+              {% if d.get_estado_devolucion_display %}
+                <span class="badge badge-gray">{{ d.get_estado_devolucion_display }}</span>
+              {% else %}
+                -
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6" style="text-align:center;color:var(--text-light);padding:1.5rem;">No hay equipos registrados.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
-    <div class="card-body">
-        <div class="row mb-3">
-            <div class="col-md-6">
-                <p><strong>Empleado:</strong> {{ prestamo.employee.apellido }}, {{ prestamo.employee.nombre }}</p>
-                <p><strong>Cedula:</strong> {{ prestamo.employee.cedula }}</p>
-                <p><strong>Cargo:</strong> {{ prestamo.employee.cargo }}</p>
-                <p><strong>Departamento:</strong> {{ prestamo.employee.departamento }}</p>
-            </div>
-            <div class="col-md-6">
-                <p><strong>Fecha de Prestamo:</strong> {{ prestamo.fecha_prestamo }}</p>
-                <p><strong>Fecha Prevista Devolucion:</strong> {{ prestamo.fecha_prevista_devolucion }}</p>
-                <p><strong>Estado:</strong> <span class="badge bg-{% if prestamo.estado == 'activo' %}warning{% elif prestamo.estado == 'devuelto' %}success{% else %}secondary{% endif %}">{{ prestamo.get_estado_display }}</span></p>
-                <p><strong>Motivo:</strong> {{ prestamo.motivo }}</p>
-                <p><strong>Creado por:</strong> {{ prestamo.created_by.username }}</p>
-                {% if prestamo.observaciones %}
-                <p><strong>Observaciones:</strong> {{ prestamo.observaciones }}</p>
-                {% endif %}
-            </div>
-        </div>
-        <h5>Equipos en Prestamo</h5>
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th>Codigo Patrimonial</th>
-                    <th>Equipo</th>
-                    <th>Serie</th>
-                    <th>Estado Entrega</th>
-                    <th>Devuelto</th>
-                    <th>Estado Devolucion</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for d in detalles %}
-                <tr>
-                    <td>{{ d.equipment.codigo_patrimonial }}</td>
-                    <td>{{ d.equipment.marca }} {{ d.equipment.modelo }}</td>
-                    <td>{{ d.equipment.numero_serie }}</td>
-                    <td>{{ d.get_estado_entrega_display }}</td>
-                    <td>{{ d.fecha_devolucion|default:"-" }}</td>
-                    <td>{{ d.get_estado_devolucion_display|default:"-" }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+  </div>
 </div>
 {% endblock %}

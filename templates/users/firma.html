@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% block title %}Mi Firma{% endblock %}
+{% block topbar_title %}Mi Firma{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-label">Perfil</div>
+    <h1 class="page-title">Mi Firma</h1>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom:1rem;">
+  <div class="card-header">✍️ Firma Actual</div>
+  <div class="card-body" style="text-align:center;">
+    {% if firma.imagen %}
+    <img src="{{ firma.imagen.url }}" alt="Firma" style="max-height:120px;border:1px solid var(--surface-border);border-radius:var(--radius-sm);padding:.5rem;">
+    {% elif firma.datos_firma %}
+    <img src="{{ firma.datos_firma }}" alt="Firma" style="max-height:120px;border:1px solid var(--surface-border);border-radius:var(--radius-sm);padding:.5rem;">
+    {% else %}
+    <div style="padding:2rem;color:var(--text-light);font-size:.85rem;">No has registrado una firma aun.</div>
+    {% endif %}
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+  <!-- SUBIR IMAGEN -->
+  <div class="card">
+    <div class="card-header">🖼️ Subir Imagen</div>
+    <div class="card-body">
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="hidden" name="modo" value="imagen">
+        <div class="form-group" style="margin-bottom:.75rem;">
+          <label class="form-label">Selecciona una imagen de firma</label>
+          <input type="file" name="imagen" accept="image/*" class="form-control" style="padding:.3rem;" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Subir Firma</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- DIBUJAR FIRMA -->
+  <div class="card">
+    <div class="card-header">✏️ Dibujar Firma</div>
+    <div class="card-body">
+      <form method="post" id="form-canvas">
+        {% csrf_token %}
+        <input type="hidden" name="modo" value="canvas">
+        <input type="hidden" name="datos_firma" id="datos-firma">
+        <div style="border:2px solid var(--surface-border);border-radius:var(--radius-sm);overflow:hidden;margin-bottom:.75rem;cursor:crosshair;">
+          <canvas id="sig-canvas" width="400" height="150" style="width:100%;height:150px;display:block;touch-action:none;"></canvas>
+        </div>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+          <button type="button" id="btn-limpiar" class="btn btn-outline btn-sm">Limpiar</button>
+          <button type="submit" id="btn-guardar" class="btn btn-primary btn-sm">Guardar Firma</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+  canvas { background:#fff; }
+</style>
+
+<script>
+(function() {
+  var canvas = document.getElementById('sig-canvas');
+  var ctx = canvas.getContext('2d');
+  var drawing = false;
+
+  function getPos(e) {
+    var rect = canvas.getBoundingClientRect();
+    var scaleX = canvas.width / rect.width;
+    var scaleY = canvas.height / rect.height;
+    var clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    var clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
+  }
+
+  function startDraw(e) {
+    e.preventDefault();
+    drawing = true;
+    var pos = getPos(e);
+    ctx.beginPath();
+    ctx.moveTo(pos.x, pos.y);
+  }
+
+  function draw(e) {
+    e.preventDefault();
+    if (!drawing) return;
+    var pos = getPos(e);
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = '#000';
+    ctx.lineTo(pos.x, pos.y);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(pos.x, pos.y);
+  }
+
+  function stopDraw(e) {
+    e.preventDefault();
+    drawing = false;
+  }
+
+  canvas.addEventListener('mousedown', startDraw);
+  canvas.addEventListener('mousemove', draw);
+  canvas.addEventListener('mouseup', stopDraw);
+  canvas.addEventListener('mouseleave', stopDraw);
+  canvas.addEventListener('touchstart', startDraw, { passive: false });
+  canvas.addEventListener('touchmove', draw, { passive: false });
+  canvas.addEventListener('touchend', stopDraw, { passive: false });
+
+  document.getElementById('btn-limpiar').addEventListener('click', function() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  });
+
+  document.getElementById('form-canvas').addEventListener('submit', function(e) {
+    var dataUrl = canvas.toDataURL('image/png');
+    document.getElementById('datos-firma').value = dataUrl;
+  });
+})();
+</script>
+{% endblock %}

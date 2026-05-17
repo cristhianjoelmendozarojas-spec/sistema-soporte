@@ -1,50 +1,86 @@
 {% extends 'base.html' %}
 {% block title %}Acta {{ devolucion.codigo }}{% endblock %}
+{% block topbar_title %}Devolucion {{ devolucion.codigo }}{% endblock %}
+{% block topbar_actions %}
+<a href="{% url 'forms:devolucion_list' %}" class="btn btn-outline btn-sm">← Volver</a>
+{% endblock %}
 {% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-label">Acta de Devolucion</div>
+    <h1 class="page-title">{{ devolucion.codigo }}</h1>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom:1.25rem;">
+  <div class="card-header">Datos de la Devolucion</div>
+  <div class="card-body">
+    <div class="info-grid">
+      <div class="info-item">
+        <span class="info-label">Empleado</span>
+        <span class="info-value">{{ devolucion.employee.apellido }}, {{ devolucion.employee.nombre }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Cedula</span>
+        <span class="info-value">{{ devolucion.employee.cedula }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Asignacion Relacionada</span>
+        <span class="info-value">{{ devolucion.asignacion.codigo|default:"-" }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Prestamo Relacionado</span>
+        <span class="info-value">{{ devolucion.prestamo.codigo|default:"-" }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Fecha de Devolucion</span>
+        <span class="info-value">{{ devolucion.fecha_devolucion }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Creado por</span>
+        <span class="info-value">{{ devolucion.created_by.username }}</span>
+      </div>
+      {% if devolucion.observaciones %}
+      <div class="info-item" style="grid-column:1/-1;">
+        <span class="info-label">Observaciones</span>
+        <span class="info-value">{{ devolucion.observaciones }}</span>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
 <div class="card">
-    <div class="card-header d-flex justify-content-between">
-        <h4>Acta de Devolucion: {{ devolucion.codigo }}</h4>
-        <a href="{% url 'forms:devolucion_list' %}" class="btn btn-secondary btn-sm">Volver</a>
+  <div class="card-header">Equipos Devueltos</div>
+  <div class="card-body" style="padding:0;">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Codigo Patrimonial</th>
+            <th>Equipo</th>
+            <th>Serie</th>
+            <th>Estado Recibido</th>
+            <th>Observaciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in detalles %}
+          <tr>
+            <td><strong>{{ d.equipment.codigo_patrimonial }}</strong></td>
+            <td>{{ d.equipment.marca }} {{ d.equipment.modelo }}</td>
+            <td>{{ d.equipment.numero_serie }}</td>
+            <td><span class="badge badge-blue">{{ d.get_estado_recibido_display }}</span></td>
+            <td>{{ d.observaciones|default:"-" }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" style="text-align:center;color:var(--text-light);padding:1.5rem;">No hay equipos registrados.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
-    <div class="card-body">
-        <div class="row mb-3">
-            <div class="col-md-6">
-                <p><strong>Empleado:</strong> {{ devolucion.employee.apellido }}, {{ devolucion.employee.nombre }}</p>
-                <p><strong>Cedula:</strong> {{ devolucion.employee.cedula }}</p>
-                <p><strong>Asignacion Relacionada:</strong> {{ devolucion.asignacion.codigo|default:"-" }}</p>
-                <p><strong>Prestamo Relacionado:</strong> {{ devolucion.prestamo.codigo|default:"-" }}</p>
-            </div>
-            <div class="col-md-6">
-                <p><strong>Fecha de Devolucion:</strong> {{ devolucion.fecha_devolucion }}</p>
-                <p><strong>Creado por:</strong> {{ devolucion.created_by.username }}</p>
-                {% if devolucion.observaciones %}
-                <p><strong>Observaciones:</strong> {{ devolucion.observaciones }}</p>
-                {% endif %}
-            </div>
-        </div>
-        <h5>Equipos Devueltos</h5>
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th>Codigo Patrimonial</th>
-                    <th>Equipo</th>
-                    <th>Serie</th>
-                    <th>Estado Recibido</th>
-                    <th>Observaciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for d in detalles %}
-                <tr>
-                    <td>{{ d.equipment.codigo_patrimonial }}</td>
-                    <td>{{ d.equipment.marca }} {{ d.equipment.modelo }}</td>
-                    <td>{{ d.equipment.numero_serie }}</td>
-                    <td>{{ d.get_estado_recibido_display }}</td>
-                    <td>{{ d.observaciones|default:"-" }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+  </div>
 </div>
 {% endblock %}

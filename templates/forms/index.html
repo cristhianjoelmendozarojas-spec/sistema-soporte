@@ -1,51 +1,46 @@
 {% extends 'base.html' %}
+{% block topbar_title %}Dashboard{% endblock %}
 {% block content %}
-<div class="row mb-4">
-    <div class="col-12">
-        <h1 class="display-6">Sistema de Soporte Tecnico</h1>
-        <p class="text-muted">Modulo de Actas - Asignacion, Prestamo y Devolucion de Equipos</p>
-    </div>
+<div class="page-header">
+  <div>
+    <div class="page-label">Panel Principal</div>
+    <h1 class="page-title">Sistema de Soporte Tecnico</h1>
+  </div>
 </div>
 
-<div class="row g-4">
-    <div class="col-md-3">
-        <div class="card text-bg-primary">
-            <div class="card-body text-center">
-                <h5 class="card-title">Asignaciones</h5>
-                <p class="display-6">{{ asignaciones }}</p>
-                <a href="{% url 'forms:asignacion_list' %}" class="btn btn-outline-light btn-sm">Ver</a>
-                <a href="{% url 'forms:asignacion_create' %}" class="btn btn-light btn-sm">Nueva</a>
-            </div>
-        </div>
+<p class="text-muted" style="margin-bottom:1.25rem;font-size:.79rem;">Modulo de Actas &mdash; Asignacion, Prestamo y Devolucion de Equipos</p>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.85rem;">
+  <div class="card-dashboard">
+    <div class="card-number">{{ asignaciones }}</div>
+    <div class="card-label">Asignaciones</div>
+    <div style="margin-top:.6rem;display:flex;gap:.35rem;justify-content:center;">
+      <a href="{% url 'forms:asignacion_list' %}" class="btn btn-outline btn-sm">Ver</a>
+      <a href="{% url 'forms:asignacion_create' %}" class="btn btn-primary btn-sm">Nueva</a>
     </div>
-    <div class="col-md-3">
-        <div class="card text-bg-warning">
-            <div class="card-body text-center">
-                <h5 class="card-title">Prestamos</h5>
-                <p class="display-6">{{ prestamos }}</p>
-                <a href="{% url 'forms:prestamo_list' %}" class="btn btn-outline-light btn-sm">Ver</a>
-                <a href="{% url 'forms:prestamo_create' %}" class="btn btn-light btn-sm">Nuevo</a>
-            </div>
-        </div>
+  </div>
+  <div class="card-dashboard">
+    <div class="card-number">{{ prestamos }}</div>
+    <div class="card-label">Prestamos</div>
+    <div style="margin-top:.6rem;display:flex;gap:.35rem;justify-content:center;">
+      <a href="{% url 'forms:prestamo_list' %}" class="btn btn-outline btn-sm">Ver</a>
+      <a href="{% url 'forms:prestamo_create' %}" class="btn btn-primary btn-sm">Nuevo</a>
     </div>
-    <div class="col-md-3">
-        <div class="card text-bg-success">
-            <div class="card-body text-center">
-                <h5 class="card-title">Devoluciones</h5>
-                <p class="display-6">{{ devoluciones }}</p>
-                <a href="{% url 'forms:devolucion_list' %}" class="btn btn-outline-light btn-sm">Ver</a>
-                <a href="{% url 'forms:devolucion_create' %}" class="btn btn-light btn-sm">Nueva</a>
-            </div>
-        </div>
+  </div>
+  <div class="card-dashboard">
+    <div class="card-number">{{ devoluciones }}</div>
+    <div class="card-label">Devoluciones</div>
+    <div style="margin-top:.6rem;display:flex;gap:.35rem;justify-content:center;">
+      <a href="{% url 'forms:devolucion_list' %}" class="btn btn-outline btn-sm">Ver</a>
+      <a href="{% url 'forms:devolucion_create' %}" class="btn btn-primary btn-sm">Nueva</a>
     </div>
-    <div class="col-md-3">
-        <div class="card text-bg-danger">
-            <div class="card-body text-center">
-                <h5 class="card-title">Prestamos Activos</h5>
-                <p class="display-6">{{ prestamos_activos }}</p>
-                <a href="{% url 'forms:prestamo_list' %}" class="btn btn-outline-light btn-sm">Ver</a>
-            </div>
-        </div>
+  </div>
+  <div class="card-dashboard">
+    <div class="card-number">{{ prestamos_activos }}</div>
+    <div class="card-label">Prestamos Activos</div>
+    <div style="margin-top:.6rem;display:flex;gap:.35rem;justify-content:center;">
+      <a href="{% url 'forms:prestamo_list' %}" class="btn btn-outline btn-sm">Ver</a>
     </div>
+  </div>
 </div>
 {% endblock %}

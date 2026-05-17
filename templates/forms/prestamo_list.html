@@ -1,34 +1,52 @@
 {% extends 'base.html' %}
 {% block title %}Actas de Prestamo{% endblock %}
+{% block topbar_title %}Prestamos{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2>Actas de Prestamo</h2>
-    <a href="{% url 'forms:prestamo_create' %}" class="btn btn-primary">Nuevo Prestamo</a>
+<div class="page-header">
+  <div>
+    <div class="page-label">Actas</div>
+    <h1 class="page-title">Prestamos</h1>
+  </div>
+  <a href="{% url 'forms:prestamo_create' %}" class="btn btn-primary btn-sm">+ Nuevo Prestamo</a>
 </div>
-<table class="table table-striped">
-    <thead>
-        <tr>
+
+<div class="card">
+  <div class="card-header">Listado de Prestamos</div>
+  <div class="card-body" style="padding:0;">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
             <th>Codigo</th>
             <th>Empleado</th>
             <th>Fecha Prestamo</th>
             <th>Fecha Devolucion</th>
             <th>Estado</th>
-            <th>Acciones</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for p in prestamos %}
-        <tr>
-            <td>{{ p.codigo }}</td>
+            <th style="text-align:center;">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in prestamos %}
+          <tr>
+            <td><strong>{{ p.codigo }}</strong></td>
             <td>{{ p.employee.apellido }}, {{ p.employee.nombre }}</td>
             <td>{{ p.fecha_prestamo }}</td>
             <td>{{ p.fecha_prevista_devolucion }}</td>
-            <td><span class="badge bg-{% if p.estado == 'activo' %}warning{% elif p.estado == 'devuelto' %}success{% else %}secondary{% endif %}">{{ p.get_estado_display }}</span></td>
-            <td><a href="{% url 'forms:prestamo_detail' p.pk %}" class="btn btn-sm btn-info">Ver</a></td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="6" class="text-center">No hay actas de prestamo registradas.</td></tr>
-        {% endfor %}
-    </tbody>
-</table>
+            <td>
+              <span class="badge {% if p.estado == 'activo' %}badge-yellow{% elif p.estado == 'devuelto' %}badge-green{% elif p.estado == 'vencido' %}badge-red{% else %}badge-gray{% endif %}">{{ p.get_estado_display }}</span>
+            </td>
+            <td class="td-center">
+              <a href="{% url 'forms:prestamo_detail' p.pk %}" class="btn btn-primary btn-sm">Ver</a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6" style="text-align:center;color:var(--text-light);padding:1.5rem;">No hay actas de prestamo registradas.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
 {% endblock %}

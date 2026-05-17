@@ -1,64 +1,216 @@
-from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from .models import Asignacion, Prestamo, Devolucion
-from .forms import (
-    AsignacionForm, AsignacionDetalleForm,
-    PrestamoForm, PrestamoDetalleForm,
-    DevolucionForm, DevolucionDetalleForm,
+from django.http import FileResponse
+from datetime import date
+import json
+from django.core.serializers.json import DjangoJSONEncoder
+
+from .models import (
+    Asignacion, AsignacionDetalle, Prestamo, Devolucion,
+    generar_codigo, COMPONENTES_PC, COMPONENTES_LAPTOP,
+    COMPONENTES_IMPRESORA, COMPONENTES_PERIFERICOS,
 )
+from .pdf_utils import generar_pdf_asignacion
+from .forms import AsignacionForm, PrestamoForm, DevolucionForm
+from apps.equipment.models import Equipment, EquipmentCategory
+from apps.employees.models import Employee
+
+TIPO_SECTIONS = [
+    ('pc', 'PC', COMPONENTES_PC),
+    ('laptop', 'Laptop', COMPONENTES_LAPTOP),
+    ('impresora', 'Impresora', COMPONENTES_IMPRESORA),
+    ('perifericos', 'Perifericos', COMPONENTES_PERIFERICOS),
+]
+
+
+def _employees_json():
+    qs = Employee.objects.filter(activo=True).values('id', 'nombre', 'apellido', 'cedula', 'cargo', 'departamento')
+    return json.dumps(list(qs), cls=DjangoJSONEncoder)
+
+
+def _build_componentes(post, tipo):
+    nombres = post.getlist(f'comp_nombre_{tipo}')
+    marcas = post.getlist(f'comp_marca_{tipo}')
+    modelos = post.getlist(f'comp_modelo_{tipo}')
+    series = post.getlist(f'comp_serie_{tipo}')
+    estados = post.getlist(f'comp_estado_{tipo}')
+
+    result = []
+    for i in range(len(nombres)):
+        if tipo == 'pc':
+            capacidades = post.getlist(f'comp_capacidad_{tipo}')
+            item = {'nombre': nombres[i], 'marca': marcas[i].strip(), 'modelo': modelos[i].strip(),
+                    'capacidad': capacidades[i].strip() if i < len(capacidades) else '',
+                    'serie': series[i].strip(), 'estado': estados[i].strip()}
+            if item['marca'] or item['modelo'] or item['capacidad'] or item['serie']:
+                result.append(item)
+        elif tipo == 'laptop':
+            ssds = post.getlist(f'comp_ssd_{tipo}')
+            hdds = post.getlist(f'comp_hdd_{tipo}')
+            memorias = post.getlist(f'comp_memoria_ram_{tipo}')
+            item = {'nombre': nombres[i], 'marca': marcas[i].strip() if i < len(marcas) else '',
+                    'modelo': modelos[i].strip() if i < len(modelos) else '',
+                    'ssd': ssds[i].strip() if i < len(ssds) else '',
+                    'hdd': hdds[i].strip() if i < len(hdds) else '',
+                    'memoria_ram': memorias[i].strip() if i < len(memorias) else '',
+                    'serie': series[i].strip() if i < len(series) else '',
+                    'estado': estados[i].strip() if i < len(estados) else ''}
+            if item['marca'] or item['modelo'] or item['ssd'] or item['hdd'] or item['memoria_ram'] or item['serie']:
+                result.append(item)
+        else:
+            item = {'nombre': nombres[i], 'marca': marcas[i].strip(), 'modelo': modelos[i].strip(),
+                    'serie': series[i].strip(), 'estado': estados[i].strip()}
+            if item['marca'] or item['modelo'] or item['serie']:
+                result.append(item)
+    return result
 
 
 @login_required
 def index(request):
-    context = {
+    return render(request, 'forms/index.html', {
         'asignaciones': Asignacion.objects.count(),
         'prestamos': Prestamo.objects.count(),
         'devoluciones': Devolucion.objects.count(),
         'prestamos_activos': Prestamo.objects.filter(estado='activo').count(),
-    }
-    return render(request, 'forms/index.html', context)
+    })
 
 
 @login_required
-@permission_required('forms.add_asignacion', raise_exception=True)
+def formatos(request):
+    return render(request, 'forms/formatos.html')
+
+
+@login_required
 def asignacion_create(request):
+    today_lima = date.today()
+
     if request.method == 'POST':
-        form = AsignacionForm(request.POST)
+        post = request.POST.copy()
+        employee_id = post.get('employee_id', '')
+        if employee_id:
+            post['employee'] = employee_id
+        post['fecha_asignacion'] = today_lima.isoformat()
+        tipos = post.getlist('tipo_equipo')
+        post['tipo_equipo'] = tipos[0] if tipos else 'pc'
+        form = AsignacionForm(post)
+
         if form.is_valid():
             asignacion = form.save(commit=False)
+            asignacion.codigo = generar_codigo(Asignacion, 'ASI')
             asignacion.created_by = request.user
             asignacion.save()
-            messages.success(request, f'Acta de asignacion {asignacion.codigo} creada exitosamente.')
+
+            for idx, tipo in enumerate(tipos, 1):
+                componentes = _build_componentes(post, tipo)
+                cat, _ = EquipmentCategory.objects.get_or_create(nombre=tipo.capitalize())
+                equipo = Equipment.objects.create(
+                    codigo_patrimonial=f'{asignacion.codigo}-{idx:02d}',
+                    categoria=cat,
+                    marca=componentes[0]['marca'] if componentes else '',
+                    modelo=componentes[0]['modelo'] if componentes else '',
+                    numero_serie=componentes[0]['serie'] if componentes else '',
+                    estado='asignado',
+                    ubicacion=asignacion.employee.departamento,
+                )
+                AsignacionDetalle.objects.create(
+                    asignacion=asignacion, equipment=equipo,
+                    tipo_equipo=tipo, estado_entrega='bueno',
+                    componentes_data=componentes,
+                )
+
+            messages.success(request, f'Acta {asignacion.codigo} creada exitosamente.')
             return redirect('forms:asignacion_list')
     else:
         form = AsignacionForm()
-    return render(request, 'forms/asignacion_form.html', {'form': form, 'titulo': 'Nueva Acta de Asignacion'})
+
+    form.initial['fecha_asignacion'] = today_lima
+    return render(request, 'forms/asignacion_form.html', {
+        'form': form,
+        'titulo': 'Nueva Acta de Asignacion',
+        'codigo_siguiente': generar_codigo(Asignacion, 'ASI'),
+        'fecha_actual': today_lima.isoformat(),
+        'tipo_sections': TIPO_SECTIONS,
+        'employees_json': _employees_json(),
+        'responsable_nombre': request.user.get_full_name() or request.user.username,
+    })
 
 
 @login_required
 def asignacion_list(request):
-    asignaciones = Asignacion.objects.all().select_related('employee', 'created_by')
-    return render(request, 'forms/asignacion_list.html', {'asignaciones': asignaciones})
+    return render(request, 'forms/asignacion_list.html', {
+        'asignaciones': Asignacion.objects.all().select_related('employee', 'created_by'),
+    })
 
 
 @login_required
 def asignacion_detail(request, pk):
     asignacion = get_object_or_404(Asignacion.objects.select_related('employee', 'created_by'), pk=pk)
-    detalles = asignacion.detalles.all().select_related('equipment')
-    return render(request, 'forms/asignacion_detail.html', {'asignacion': asignacion, 'detalles': detalles})
+    return render(request, 'forms/asignacion_detail.html', {
+        'asignacion': asignacion,
+        'detalles': asignacion.detalles.all().select_related('equipment'),
+    })
 
 
 @login_required
-@permission_required('forms.add_prestamo', raise_exception=True)
+def asignacion_edit(request, pk):
+    asignacion = get_object_or_404(Asignacion, pk=pk)
+
+    if request.method == 'POST':
+        post = request.POST.copy()
+        employee_id = post.get('employee_id', '')
+        if employee_id:
+            post['employee'] = employee_id
+        post['fecha_asignacion'] = asignacion.fecha_asignacion.isoformat()
+        tipos = post.getlist('tipo_equipo')
+        post['tipo_equipo'] = tipos[0] if tipos else 'pc'
+        form = AsignacionForm(post, instance=asignacion)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Acta {asignacion.codigo} actualizada.')
+            return redirect('forms:asignacion_detail', pk=asignacion.pk)
+    else:
+        form = AsignacionForm(instance=asignacion)
+        form.fields['tipo_equipo'].initial = asignacion.tipo_equipo
+
+    detalles = asignacion.detalles.all()
+    componentes_existentes = {d.tipo_equipo: d.componentes_data or [] for d in detalles}
+
+    return render(request, 'forms/asignacion_form.html', {
+        'form': form,
+        'titulo': f'Editar {asignacion.codigo}',
+        'edit_mode': True,
+        'asignacion': asignacion,
+        'codigo_siguiente': asignacion.codigo,
+        'fecha_actual': asignacion.fecha_asignacion.isoformat(),
+        'tipo_sections': TIPO_SECTIONS,
+        'employees_json': _employees_json(),
+        'componentes_json': json.dumps(componentes_existentes, cls=DjangoJSONEncoder),
+        'responsable_nombre': request.user.get_full_name() or request.user.username,
+    })
+
+
+@login_required
+def asignacion_delete(request, pk):
+    asignacion = get_object_or_404(Asignacion, pk=pk)
+    if request.method == 'POST':
+        codigo = asignacion.codigo
+        asignacion.delete()
+        messages.success(request, f'Acta {codigo} eliminada.')
+        return redirect('forms:asignacion_list')
+    return render(request, 'forms/asignacion_confirm_delete.html', {'asignacion': asignacion})
+
+
+@login_required
 def prestamo_create(request):
     if request.method == 'POST':
         form = PrestamoForm(request.POST)
         if form.is_valid():
             prestamo = form.save(commit=False)
+            prestamo.codigo = generar_codigo(Prestamo, 'PRE')
             prestamo.created_by = request.user
             prestamo.save()
-            messages.success(request, f'Acta de prestamo {prestamo.codigo} creada exitosamente.')
+            messages.success(request, f'Acta {prestamo.codigo} creada.')
             return redirect('forms:prestamo_list')
     else:
         form = PrestamoForm()
@@ -67,27 +219,30 @@ def prestamo_create(request):
 
 @login_required
 def prestamo_list(request):
-    prestamos = Prestamo.objects.all().select_related('employee', 'created_by')
-    return render(request, 'forms/prestamo_list.html', {'prestamos': prestamos})
+    return render(request, 'forms/prestamo_list.html', {
+        'prestamos': Prestamo.objects.all().select_related('employee', 'created_by'),
+    })
 
 
 @login_required
 def prestamo_detail(request, pk):
     prestamo = get_object_or_404(Prestamo.objects.select_related('employee', 'created_by'), pk=pk)
-    detalles = prestamo.detalles.all().select_related('equipment')
-    return render(request, 'forms/prestamo_detail.html', {'prestamo': prestamo, 'detalles': detalles})
+    return render(request, 'forms/prestamo_detail.html', {
+        'prestamo': prestamo,
+        'detalles': prestamo.detalles.all().select_related('equipment'),
+    })
 
 
 @login_required
-@permission_required('forms.add_devolucion', raise_exception=True)
 def devolucion_create(request):
     if request.method == 'POST':
         form = DevolucionForm(request.POST)
         if form.is_valid():
             devolucion = form.save(commit=False)
+            devolucion.codigo = generar_codigo(Devolucion, 'DEV')
             devolucion.created_by = request.user
             devolucion.save()
-            messages.success(request, f'Acta de devolucion {devolucion.codigo} creada exitosamente.')
+            messages.success(request, f'Acta {devolucion.codigo} creada.')
             return redirect('forms:devolucion_list')
     else:
         form = DevolucionForm()
@@ -96,12 +251,22 @@ def devolucion_create(request):
 
 @login_required
 def devolucion_list(request):
-    devoluciones = Devolucion.objects.all().select_related('employee', 'created_by')
-    return render(request, 'forms/devolucion_list.html', {'devoluciones': devoluciones})
+    return render(request, 'forms/devolucion_list.html', {
+        'devoluciones': Devolucion.objects.all().select_related('employee', 'created_by'),
+    })
 
 
 @login_required
 def devolucion_detail(request, pk):
     devolucion = get_object_or_404(Devolucion.objects.select_related('employee', 'created_by'), pk=pk)
-    detalles = devolucion.detalles.all().select_related('equipment')
-    return render(request, 'forms/devolucion_detail.html', {'devolucion': devolucion, 'detalles': detalles})
+    return render(request, 'forms/devolucion_detail.html', {
+        'devolucion': devolucion,
+        'detalles': devolucion.detalles.all().select_related('equipment'),
+    })
+
+
+@login_required
+def asignacion_pdf(request, pk):
+    asignacion = get_object_or_404(Asignacion.objects.select_related('employee', 'created_by'), pk=pk)
+    buffer = generar_pdf_asignacion(asignacion, request)
+    return FileResponse(buffer, as_attachment=True, filename=f'{asignacion.codigo}.pdf')

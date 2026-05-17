@@ -30,6 +30,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'apps.users.middleware.ForcePasswordChangeMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -83,6 +84,6 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-LOGIN_URL = '/admin/login/'
+LOGIN_URL = '/admin-site/login/'
 LOGIN_REDIRECT_URL = '/'
-LOGOUT_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/admin-site/login/'
