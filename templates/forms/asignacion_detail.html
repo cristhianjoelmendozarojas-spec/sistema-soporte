@@ -63,131 +63,125 @@
   </div>
 </div>
 
-<div class="card">
-  <div class="card-header">Equipos Asignados</div>
-  <div class="card-body" style="padding:0;">
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Codigo Patrimonial</th>
-            <th>Equipo</th>
-            <th>Serie</th>
-            <th>Estado Entrega</th>
-            <th>Observaciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for d in detalles %}
-          <tr>
-            <td><strong>{{ d.equipment.codigo_patrimonial }}</strong></td>
-            <td>{{ d.equipment.marca }} {{ d.equipment.modelo }}</td>
-            <td>{{ d.equipment.numero_serie }}</td>
-            <td><span class="badge badge-blue">{{ d.get_estado_entrega_display }}</span></td>
-            <td>{{ d.observaciones|default:"-" }}</td>
-          </tr>
-
-          <!-- Componentes detail for each detail -->
-          {% if d.componentes_data %}
-          <tr>
-            <td colspan="5" style="padding:0;">
-              <table style="width:100%;border-collapse:collapse;font-size:.73rem;background:var(--surface-section);">
-                <thead>
-                  {% if d.tipo_equipo == 'pc' %}
-                  <tr>
-                    <th style="padding:.35rem .6rem;font-size:.6rem;">Componente</th>
-                    <th style="padding:.35rem .6rem;font-size:.6rem;">Marca</th>
-                    <th style="padding:.35rem .6rem;font-size:.6rem;">Modelo</th>
-                    <th style="padding:.35rem .6rem;font-size:.6rem;">Capacidad</th>
-                    <th style="padding:.35rem .6rem;font-size:.6rem;">Serie</th>
-                    <th style="padding:.35rem .6rem;font-size:.6rem;">Estado</th>
-                  </tr>
-                  {% elif d.tipo_equipo == 'laptop' %}
-                  <tr>
-                    <th style="padding:.35rem .6rem;font-size:.6rem;">Componente</th>
-                    <th style="padding:.35rem .6rem;font-size:.6rem;">Marca</th>
-                    <th style="padding:.35rem .6rem;font-size:.6rem;">Modelo</th>
-                    <th style="padding:.35rem .6rem;font-size:.6rem;">SSD</th>
-                    <th style="padding:.35rem .6rem;font-size:.6rem;">HDD</th>
-                    <th style="padding:.35rem .6rem;font-size:.6rem;">Memoria RAM</th>
-                    <th style="padding:.35rem .6rem;font-size:.6rem;">Serie</th>
-                    <th style="padding:.35rem .6rem;font-size:.6rem;">Estado</th>
-                  </tr>
-                  {% else %}
-                  <tr>
-                    <th style="padding:.35rem .6rem;font-size:.6rem;">Componente</th>
-                    <th style="padding:.35rem .6rem;font-size:.6rem;">Marca</th>
-                    <th style="padding:.35rem .6rem;font-size:.6rem;">Modelo</th>
-                    <th style="padding:.35rem .6rem;font-size:.6rem;">Serie</th>
-                    <th style="padding:.35rem .6rem;font-size:.6rem;">Estado</th>
-                  </tr>
-                  {% endif %}
-                </thead>
-                <tbody>
-                  {% for c in d.componentes_data %}
-                  {% if d.tipo_equipo == 'pc' %}
-                  <tr>
-                    <td style="padding:.25rem .6rem;border-bottom:1px solid var(--surface-border);font-weight:600;">{{ c.nombre }}</td>
-                    <td style="padding:.25rem .6rem;border-bottom:1px solid var(--surface-border);">{{ c.marca|default:"-" }}</td>
-                    <td style="padding:.25rem .6rem;border-bottom:1px solid var(--surface-border);">{{ c.modelo|default:"-" }}</td>
-                    <td style="padding:.25rem .6rem;border-bottom:1px solid var(--surface-border);">{{ c.capacidad|default:"-" }}</td>
-                    <td style="padding:.25rem .6rem;border-bottom:1px solid var(--surface-border);">{{ c.serie|default:"-" }}</td>
-                    <td style="padding:.25rem .6rem;border-bottom:1px solid var(--surface-border);">
-                      {% if c.estado %}
-                        <span class="badge {% if c.estado == 'OPERATIVO' %}badge-green{% elif c.estado == 'MALO' %}badge-red{% else %}badge-yellow{% endif %}">{{ c.estado }}</span>
-                      {% else %}
-                        -
-                      {% endif %}
-                    </td>
-                  </tr>
-                  {% elif d.tipo_equipo == 'laptop' %}
-                  <tr>
-                    <td style="padding:.25rem .6rem;border-bottom:1px solid var(--surface-border);font-weight:600;">{{ c.nombre }}</td>
-                    <td style="padding:.25rem .6rem;border-bottom:1px solid var(--surface-border);">{{ c.marca|default:"-" }}</td>
-                    <td style="padding:.25rem .6rem;border-bottom:1px solid var(--surface-border);">{{ c.modelo|default:"-" }}</td>
-                    <td style="padding:.25rem .6rem;border-bottom:1px solid var(--surface-border);">{{ c.ssd|default:"-" }}</td>
-                    <td style="padding:.25rem .6rem;border-bottom:1px solid var(--surface-border);">{{ c.hdd|default:"-" }}</td>
-                    <td style="padding:.25rem .6rem;border-bottom:1px solid var(--surface-border);">{{ c.memoria_ram|default:"-" }}</td>
-                    <td style="padding:.25rem .6rem;border-bottom:1px solid var(--surface-border);">{{ c.serie|default:"-" }}</td>
-                    <td style="padding:.25rem .6rem;border-bottom:1px solid var(--surface-border);">
-                      {% if c.estado %}
-                        <span class="badge {% if c.estado == 'OPERATIVO' %}badge-green{% elif c.estado == 'MALO' %}badge-red{% else %}badge-yellow{% endif %}">{{ c.estado }}</span>
-                      {% else %}
-                        -
-                      {% endif %}
-                    </td>
-                  </tr>
-                  {% else %}
-                  <tr>
-                    <td style="padding:.25rem .6rem;border-bottom:1px solid var(--surface-border);font-weight:600;">{{ c.nombre }}</td>
-                    <td style="padding:.25rem .6rem;border-bottom:1px solid var(--surface-border);">{{ c.marca|default:"-" }}</td>
-                    <td style="padding:.25rem .6rem;border-bottom:1px solid var(--surface-border);">{{ c.modelo|default:"-" }}</td>
-                    <td style="padding:.25rem .6rem;border-bottom:1px solid var(--surface-border);">{{ c.serie|default:"-" }}</td>
-                    <td style="padding:.25rem .6rem;border-bottom:1px solid var(--surface-border);">
-                      {% if c.estado %}
-                        <span class="badge {% if c.estado == 'OPERATIVO' %}badge-green{% elif c.estado == 'MALO' %}badge-red{% else %}badge-yellow{% endif %}">{{ c.estado }}</span>
-                      {% else %}
-                        -
-                      {% endif %}
-                    </td>
-                  </tr>
-                  {% endif %}
-                  {% endfor %}
-                </tbody>
-              </table>
-            </td>
-          </tr>
+<div class="equipos-grid">
+  {% for d in detalles %}
+  <div class="equipo-card" data-tipo="{{ d.tipo_equipo }}">
+    <div class="equipo-card-header">
+      {% if d.tipo_equipo == 'pc' %}
+      <svg class="eq-icon" viewBox="0 0 64 64" fill="none"><rect x="6" y="4" width="52" height="36" rx="3" stroke="currentColor" stroke-width="2.5"/><rect x="10" y="8" width="44" height="26" rx="1" fill="currentColor" opacity=".12"/><path d="M22 50h20" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M32 40v10" stroke="currentColor" stroke-width="2.5"/><path d="M18 54h28" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+      {% elif d.tipo_equipo == 'laptop' %}
+      <svg class="eq-icon" viewBox="0 0 64 64" fill="none"><path d="M8 10h48v30H8z" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/><rect x="12" y="14" width="40" height="22" rx="1" fill="currentColor" opacity=".12"/><path d="M4 40h56l-4 8H8l-4-8z" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/></svg>
+      {% elif d.tipo_equipo == 'impresora' %}
+      <svg class="eq-icon" viewBox="0 0 64 64" fill="none"><path d="M14 24h36v16H14z" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/><path d="M20 8h24v16H20z" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/><path d="M14 40v12h36V40" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/><circle cx="44" cy="14" r="2" fill="currentColor"/></svg>
+      {% else %}
+      <svg class="eq-icon" viewBox="0 0 64 64" fill="none"><rect x="8" y="12" width="20" height="14" rx="2" stroke="currentColor" stroke-width="2.5"/><rect x="12" y="16" width="12" height="6" rx="1" fill="currentColor" opacity=".12"/><path d="M18 26v8" stroke="currentColor" stroke-width="2.5"/><path d="M12 38h12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M36 18h14a2 2 0 012 2v20a2 2 0 01-2 2H36a2 2 0 01-2-2V20a2 2 0 012-2z" stroke="currentColor" stroke-width="2.5"/></svg>
+      {% endif %}
+      <div class="eq-header-info">
+        <span class="eq-codigo">{{ d.equipment.codigo_patrimonial }}</span>
+        <span class="eq-tipo">{{ d.get_tipo_equipo_display }}</span>
+      </div>
+    </div>
+    <div class="eq-resumen">
+      {% for c in d.componentes_data %}
+      <div class="eq-resumen-row">
+        {% if c.estado == 'OPERATIVO' %}
+        <span class="eq-status-dot green" title="{{ c.estado }}"></span>
+        {% elif c.estado == 'REGULAR' %}
+        <span class="eq-status-dot yellow" title="{{ c.estado }}"></span>
+        {% elif c.estado == 'MALO' %}
+        <span class="eq-status-dot red" title="{{ c.estado }}"></span>
+        {% endif %}
+        <span class="eq-resumen-item">
+          {% if d.tipo_equipo == 'pc' %}
+            {% if c.nombre == 'PROCESADOR' or c.nombre == 'MOTHERBOARD' or c.nombre == 'FUENTE DE PODER' or c.nombre == 'TARJETA DE RED' or c.nombre == 'TARJETA DE VIDEO' %}
+              <span class="eq-label">{{ c.nombre }}:</span> <span class="eq-value">{{ c.modelo|default:c.marca|default:"-" }}</span>
+            {% elif c.nombre == 'MEMORIA RAM 1' or c.nombre == 'MEMORIA RAM 2' %}
+              <span class="eq-label">{{ c.nombre }}:</span> <span class="eq-value">{{ c.capacidad|default:"-" }}</span>
+            {% elif c.nombre == 'UNIDAD DE ESTADO SOLIDO (SSD)' %}
+              <span class="eq-label">SSD:</span> <span class="eq-value">{{ c.capacidad|default:"-" }}</span>
+            {% endif %}
+          {% elif d.tipo_equipo == 'laptop' %}
+            {% if c.nombre == 'EQUIPO' %}
+              <span class="eq-label">Equipo:</span> <span class="eq-value">{{ c.marca|default:"" }} {{ c.modelo|default:"-" }}</span>
+              {% if c.ssd %} | <span class="eq-label">SSD:</span> <span class="eq-value">{{ c.ssd }}</span>{% endif %}
+              {% if c.memoria_ram %} | <span class="eq-label">RAM:</span> <span class="eq-value">{{ c.memoria_ram }}</span>{% endif %}
+            {% elif c.nombre == 'CARGADOR' %}
+              <span class="eq-label">Cargador:</span> <span class="eq-value">{{ c.marca|default:c.modelo|default:"-" }}</span>
+            {% endif %}
+          {% elif d.tipo_equipo == 'impresora' %}
+            <span class="eq-label">Impresora:</span> <span class="eq-value">{{ c.marca|default:"" }} {{ c.modelo|default:"-" }}</span>
+          {% elif d.tipo_equipo == 'perifericos' %}
+            <span class="eq-label">{{ c.nombre }}:</span> <span class="eq-value">{{ c.marca|default:c.modelo|default:"-" }}</span>
           {% endif %}
-
-          {% empty %}
-          <tr>
-            <td colspan="5" style="text-align:center;color:var(--text-light);padding:1.5rem;">No hay equipos registrados.</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+        </span>
+      </div>
+      {% empty %}
+      <div class="eq-resumen-row">
+        <span class="eq-resumen-item">{{ d.equipment.marca }} {{ d.equipment.modelo }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="equipo-card-footer">
+      {% if d.observaciones %}
+      <span class="eq-obs-short">{{ d.observaciones|truncatechars:30 }}</span>
+      {% endif %}
+      <button type="button" class="btn-ver-detalle" data-detalle-id="{{ d.pk }}">Ver Detalle</button>
     </div>
   </div>
+
+  <!-- Modal de detalle -->
+  <div id="modal-detalle-{{ d.pk }}" class="eq-modal">
+    <div class="eq-modal-content">
+      <div class="eq-modal-header">
+        <span class="eq-modal-title">{{ d.equipment.codigo_patrimonial }} - {{ d.get_tipo_equipo_display }}</span>
+        <button type="button" class="eq-modal-close" data-detalle-id="{{ d.pk }}">&times;</button>
+      </div>
+      <div class="eq-modal-body">
+        {% for c in d.componentes_data %}
+        <div class="eq-detail-comp">
+          <div class="eq-detail-comp-name">{{ c.nombre }}</div>
+          <div class="eq-detail-fields">
+            {% if c.marca %}<span class="eq-field">Marca: <strong>{{ c.marca }}</strong></span>{% endif %}
+            {% if c.modelo %}<span class="eq-field">Modelo: <strong>{{ c.modelo }}</strong></span>{% endif %}
+            {% if c.capacidad %}<span class="eq-field">Capacidad: <strong>{{ c.capacidad }}</strong></span>{% endif %}
+            {% if d.tipo_equipo == 'laptop' and c.nombre == 'EQUIPO' %}
+              {% if c.ssd %}<span class="eq-field">SSD: <strong>{{ c.ssd }}</strong></span>{% endif %}
+              {% if c.hdd %}<span class="eq-field">HDD: <strong>{{ c.hdd }}</strong></span>{% endif %}
+              {% if c.memoria_ram %}<span class="eq-field">RAM: <strong>{{ c.memoria_ram }}</strong></span>{% endif %}
+            {% endif %}
+            {% if c.serie %}<span class="eq-field">S/N: <strong>{{ c.serie }}</strong></span>{% endif %}
+            {% if c.estado %}
+              <span class="eq-field">Estado:
+                <span class="eq-badge {% if c.estado == 'OPERATIVO' %}eq-green{% elif c.estado == 'MALO' %}eq-red{% else %}eq-yellow{% endif %}">{{ c.estado }}</span>
+              </span>
+            {% endif %}
+          </div>
+        </div>
+        {% empty %}
+        <div class="eq-detail-comp">
+          <div class="eq-detail-comp-name">{{ d.equipment.marca }} {{ d.equipment.modelo }}</div>
+          <div class="eq-detail-fields">
+            {% if d.equipment.numero_serie %}<span class="eq-field">S/N: <strong>{{ d.equipment.numero_serie }}</strong></span>{% endif %}
+          </div>
+        </div>
+        {% endfor %}
+        {% if d.observaciones %}
+        <div class="eq-detail-obs">
+          <strong>Observaciones:</strong> {{ d.observaciones }}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% empty %}
+  <div class="eq-empty">
+    <div class="card" style="margin-bottom:1rem;">
+      <div class="card-body" style="text-align:center;color:var(--text-light);padding:2rem;">
+        No hay equipos registrados.
+      </div>
+    </div>
+  </div>
+  {% endfor %}
 </div>
 
 {% include 'forms/_delete_modal.html' %}
@@ -225,4 +219,251 @@
     </div>
   </div>
 </div>
+
+<style>
+.equipos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: .75rem;
+  margin-bottom: 1.25rem;
+}
+.equipo-card {
+  background: #fff;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: box-shadow .15s, border-color .15s;
+}
+.equipo-card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--primary-border);
+}
+.equipo-card-header {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  padding: .5rem .7rem;
+  background: linear-gradient(135deg, var(--navy) 0%, #1e3a5f 100%);
+  color: #fff;
+}
+.eq-icon {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+}
+.eq-header-info {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  min-width: 0;
+}
+.eq-codigo {
+  font-size: .75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.eq-tipo {
+  font-size: .55rem;
+  font-weight: 600;
+  color: rgba(255,255,255,.7);
+  background: rgba(255,255,255,.15);
+  padding: .1rem .35rem;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  white-space: nowrap;
+}
+.eq-resumen {
+  padding: .5rem .7rem;
+  display: flex;
+  flex-direction: column;
+  gap: .3rem;
+  border-bottom: 1px solid var(--surface-border);
+}
+.eq-resumen-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .4rem;
+  text-align: center;
+  font-size: .65rem;
+  padding: .15rem 0;
+}
+.eq-resumen-item {
+  font-size: .65rem;
+  color: var(--text);
+}
+.eq-label {
+  font-weight: 600;
+  color: var(--text-muted);
+  font-size: .62rem;
+}
+.eq-value {
+  color: var(--text);
+  font-weight: 500;
+}
+.eq-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.eq-status-dot.green { background: #22c55e; box-shadow: 0 0 4px rgba(34,197,94,.5); }
+.eq-status-dot.yellow { background: #eab308; box-shadow: 0 0 4px rgba(234,179,8,.5); }
+.eq-status-dot.red { background: #ef4444; box-shadow: 0 0 4px rgba(239,68,68,.5); }
+.equipo-card-footer {
+  padding: .35rem .7rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .4rem;
+  background: var(--surface-section);
+}
+.eq-obs-short {
+  font-size: .6rem;
+  color: var(--text-muted);
+  font-style: italic;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+.btn-ver-detalle {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: .25rem .65rem;
+  font-size: .62rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .12s;
+  white-space: nowrap;
+}
+.btn-ver-detalle:hover {
+  background: var(--primary-dark, #1d4ed8);
+}
+.eq-empty {
+  grid-column: 1 / -1;
+}
+/* Modal */
+.eq-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.5);
+  z-index: 10000;
+  align-items: center;
+  justify-content: center;
+}
+.eq-modal.active {
+  display: flex;
+}
+.eq-modal-content {
+  background: #fff;
+  border-radius: var(--radius);
+  width: 90%;
+  max-width: 560px;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+}
+.eq-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .6rem 1rem;
+  background: var(--navy);
+  color: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.eq-modal-title {
+  font-size: .85rem;
+  font-weight: 700;
+}
+.eq-modal-close {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.3rem;
+  cursor: pointer;
+  line-height: 1;
+  opacity: .8;
+}
+.eq-modal-close:hover { opacity: 1; }
+.eq-modal-body {
+  padding: .75rem 1rem;
+}
+.eq-detail-comp {
+  padding: .45rem 0;
+  border-bottom: 1px solid var(--surface-border);
+}
+.eq-detail-comp:last-child { border-bottom: none; }
+.eq-detail-comp-name {
+  font-size: .75rem;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: .2rem;
+}
+.eq-detail-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .2rem .8rem;
+  font-size: .68rem;
+}
+.eq-field {
+  color: var(--text-muted);
+}
+.eq-field strong {
+  color: var(--text);
+  font-weight: 600;
+}
+.eq-badge {
+  display: inline-block;
+  font-size: .58rem;
+  padding: .1rem .35rem;
+  border-radius: 999px;
+  font-weight: 600;
+}
+.eq-badge.eq-green { background: #dcfce7; color: #166534; }
+.eq-badge.eq-red { background: #fef2f2; color: #991b1b; }
+.eq-badge.eq-yellow { background: #fefce8; color: #854d0e; }
+.eq-detail-obs {
+  margin-top: .5rem;
+  padding: .5rem;
+  background: var(--surface-section);
+  border-radius: var(--radius-sm);
+  font-size: .7rem;
+  color: var(--text);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.btn-ver-detalle').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var id = this.getAttribute('data-detalle-id');
+      var modal = document.getElementById('modal-detalle-' + id);
+      if (modal) modal.classList.add('active');
+    });
+  });
+
+  document.querySelectorAll('.eq-modal-close').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var id = this.getAttribute('data-detalle-id');
+      var modal = document.getElementById('modal-detalle-' + id);
+      if (modal) modal.classList.remove('active');
+    });
+  });
+
+  document.querySelectorAll('.eq-modal').forEach(function(modal) {
+    modal.addEventListener('click', function(e) {
+      if (e.target === this) this.classList.remove('active');
+    });
+  });
+});
+</script>
 {% endblock %}

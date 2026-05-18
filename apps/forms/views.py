@@ -155,6 +155,7 @@ def asignacion_detail(request, pk):
 @login_required
 def asignacion_edit(request, pk):
     asignacion = get_object_or_404(Asignacion, pk=pk)
+    detalles = asignacion.detalles.all()
 
     if request.method == 'POST':
         post = request.POST.copy()
@@ -167,14 +168,62 @@ def asignacion_edit(request, pk):
         form = AsignacionForm(post, instance=asignacion)
         if form.is_valid():
             form.save()
+            tipos_existentes = set(d.tipo_equipo for d in detalles)
+            tipos_nuevos = set(tipos)
+
+            for idx, tipo in enumerate(tipos, 1):
+                componentes = _build_componentes(post, tipo)
+                cat, _ = EquipmentCategory.objects.get_or_create(nombre=tipo.capitalize())
+
+                if tipo in tipos_existentes:
+                    detalle = detalles.get(tipo_equipo=tipo)
+                    equipo = detalle.equipment
+                    equipo.marca = componentes[0]['marca'] if componentes else equipo.marca
+                    equipo.modelo = componentes[0]['modelo'] if componentes else equipo.modelo
+                    equipo.numero_serie = componentes[0]['serie'] if componentes else equipo.numero_serie
+                    equipo.save()
+                    detalle.componentes_data = componentes
+                    detalle.save()
+                else:
+                    equipo = Equipment.objects.create(
+                        codigo_patrimonial=f'{asignacion.codigo}-{idx:02d}',
+                        categoria=cat,
+                        marca=componentes[0]['marca'] if componentes else '',
+                        modelo=componentes[0]['modelo'] if componentes else '',
+                        numero_serie=componentes[0]['serie'] if componentes else '',
+                        estado='asignado',
+                        ubicacion=asignacion.employee.departamento,
+                    )
+                    AsignacionDetalle.objects.create(
+                        asignacion=asignacion, equipment=equipo,
+                        tipo_equipo=tipo, estado_entrega='bueno',
+                        componentes_data=componentes,
+                    )
+
+            for tipo in (tipos_existentes - tipos_nuevos):
+                detalle = detalles.get(tipo_equipo=tipo)
+                detalle.equipment.delete()
+                detalle.delete()
+
             messages.success(request, f'Acta {asignacion.codigo} actualizada.')
             return redirect('forms:asignacion_detail', pk=asignacion.pk)
     else:
         form = AsignacionForm(instance=asignacion)
-        form.fields['tipo_equipo'].initial = asignacion.tipo_equipo
 
     detalles = asignacion.detalles.all()
     componentes_existentes = {d.tipo_equipo: d.componentes_data or [] for d in detalles}
+    tipos_seleccionados = list(componentes_existentes.keys())
+    empleados_list = json.loads(_employees_json())
+    emp_asignacion = {
+        'id': asignacion.employee.id,
+        'nombre': asignacion.employee.nombre,
+        'apellido': asignacion.employee.apellido,
+        'cedula': asignacion.employee.cedula,
+        'cargo': asignacion.employee.cargo,
+        'departamento': asignacion.employee.departamento,
+    }
+    if not any(e['id'] == emp_asignacion['id'] for e in empleados_list):
+        empleados_list.insert(0, emp_asignacion)
 
     return render(request, 'forms/asignacion_form.html', {
         'form': form,
@@ -184,8 +233,11 @@ def asignacion_edit(request, pk):
         'codigo_siguiente': asignacion.codigo,
         'fecha_actual': asignacion.fecha_asignacion.isoformat(),
         'tipo_sections': TIPO_SECTIONS,
-        'employees_json': _employees_json(),
+        'employees_json': json.dumps(empleados_list, cls=DjangoJSONEncoder),
         'componentes_json': json.dumps(componentes_existentes, cls=DjangoJSONEncoder),
+        'tipos_seleccionados': tipos_seleccionados,
+        'detalles_map': {d.tipo_equipo: d.pk for d in detalles},
+        'equipos_map': {d.tipo_equipo: d.equipment.pk for d in detalles},
         'responsable_nombre': request.user.get_full_name() or request.user.username,
     })
 

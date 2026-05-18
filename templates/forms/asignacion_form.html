@@ -30,19 +30,19 @@
     <div class="card-body" style="padding:.6rem .8rem;">
       <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
         <label class="tipo-cb" style="padding:.35rem .6rem;font-size:.75rem;">
-          <input type="checkbox" name="tipo_equipo" value="pc" {% if edit_mode and asignacion.tipo_equipo == 'pc' %}checked{% endif %}>
+          <input type="checkbox" name="tipo_equipo" value="pc" {% if edit_mode and 'pc' in tipos_seleccionados %}checked{% endif %}>
           <span class="tipo-cb-label">PC</span>
         </label>
         <label class="tipo-cb" style="padding:.35rem .6rem;font-size:.75rem;">
-          <input type="checkbox" name="tipo_equipo" value="laptop" {% if edit_mode and asignacion.tipo_equipo == 'laptop' %}checked{% endif %}>
+          <input type="checkbox" name="tipo_equipo" value="laptop" {% if edit_mode and 'laptop' in tipos_seleccionados %}checked{% endif %}>
           <span class="tipo-cb-label">Laptop</span>
         </label>
         <label class="tipo-cb" style="padding:.35rem .6rem;font-size:.75rem;">
-          <input type="checkbox" name="tipo_equipo" value="impresora" {% if edit_mode and asignacion.tipo_equipo == 'impresora' %}checked{% endif %}>
+          <input type="checkbox" name="tipo_equipo" value="impresora" {% if edit_mode and 'impresora' in tipos_seleccionados %}checked{% endif %}>
           <span class="tipo-cb-label">Impresora</span>
         </label>
         <label class="tipo-cb" style="padding:.35rem .6rem;font-size:.75rem;">
-          <input type="checkbox" name="tipo_equipo" value="perifericos" {% if edit_mode and asignacion.tipo_equipo == 'perifericos' %}checked{% endif %}>
+          <input type="checkbox" name="tipo_equipo" value="perifericos" {% if edit_mode and 'perifericos' in tipos_seleccionados %}checked{% endif %}>
           <span class="tipo-cb-label">Perifericos</span>
         </label>
       </div>
@@ -340,11 +340,18 @@ document.addEventListener('DOMContentLoaded', function() {
   var peruDate = getPeruDate();
   var displayFecha = document.getElementById('display-fecha');
   var hiddenFecha = document.getElementById('hidden-fecha');
+  {% if edit_mode %}
+  var fechaStr = '{{ fecha_actual }}';
+  var p = fechaStr.split('-');
+  hiddenFecha.value = fechaStr;
+  displayFecha.textContent = p[2] + ' ' + ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Set','Oct','Nov','Dic'][parseInt(p[1])-1] + ' ' + p[0];
+  {% else %}
   if (hiddenFecha) hiddenFecha.value = peruDate;
   if (displayFecha) {
     var p = peruDate.split('-');
     displayFecha.textContent = p[2] + ' ' + ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Set','Oct','Nov','Dic'][parseInt(p[1])-1] + ' ' + p[0];
   }
+  {% endif %}
 
   // ── TIPO EQUIPO ──
   var tipoCbs = document.querySelectorAll('.tipo-cb input[type="checkbox"]');
@@ -485,11 +492,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
   var COMPONENTES_EXISTENTES = {% if componentes_json %}{{ componentes_json|safe }}{% else %}{}{% endif %};
   Object.keys(COMPONENTES_EXISTENTES).forEach(function(tipo) {
-    var rows = document.querySelectorAll('.comp-section[data-tipo="' + tipo + '"] .tabla-componentes tbody tr');
-    COMPONENTES_EXISTENTES[tipo].forEach(function(comp, i) {
-      if (i >= rows.length) return;
-      var cels = rows[i].cells;
-      var inputs = rows[i].querySelectorAll('input, select');
+    var section = document.querySelector('.comp-section[data-tipo="' + tipo + '"]');
+    if (!section) return;
+    var rows = section.querySelectorAll('.tabla-componentes tbody tr');
+    COMPONENTES_EXISTENTES[tipo].forEach(function(comp) {
+      var targetRow = null;
+      for (var r = 0; r < rows.length; r++) {
+        var hiddenInput = rows[r].querySelector('input[type="hidden"][name="comp_nombre_' + tipo + '"]');
+        if (hiddenInput && hiddenInput.value === comp.nombre) {
+          targetRow = rows[r];
+          break;
+        }
+      }
+      if (!targetRow) return;
+      var inputs = targetRow.querySelectorAll('input[type="text"], select');
       inputs.forEach(function(inp) {
         var n = inp.name || '';
         if (n.endsWith('_marca_' + tipo)) inp.value = comp.marca || '';
