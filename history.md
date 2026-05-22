@@ -89,4 +89,30 @@ media/firmas/                 — Directorio creado
 4. **Equipment `numero_serie`**: Manejar valor único cuando está vacío
 5. **Refactor**: Extraer helper `_crear_equipo_y_detalle()`
 6. **Replicar patrón** a Préstamos y Devoluciones
-7. **PDF de Préstamos/Devoluciones**
+7. **PDF de Préstamos/Devoluciones
+
+---
+
+## Sesión 2 — 18/05/2026
+
+### 1. Ejecutar proyecto y diagnóstico de migraciones
+**Problema**: Al iniciar el servidor, el login fallaba con `psycopg2.errors.UndefinedColumn: no existe la columna users_profile.cambiar_password`.
+**Causa**: La BD se creó desde `db_schema.sql` (solo schema, sin migraciones), pero el modelo `Profile` tenía el campo `cambiar_password` agregado en la migración `0003_profile_cambiar_password.py` que nunca se aplicó.
+**Solución**: Se ejecutó `python manage.py showmigrations` para identificar las migraciones pendientes:
+- `users.0002_module_profile_modulos`
+- `users.0003_profile_cambiar_password`
+- `users.0004_add_colaboradores_module`
+- `users.0005_firma`
+- `forms.0002_asignacion_tipo_equipo_and_more`
+- `forms.0003_asignaciondetalle_tipo_equipo_and_more`
+
+Luego `python manage.py migrate` aplicó las 6 migraciones correctamente.
+
+### 2. Tutorial para cargar DB a Neon
+- Se creó `Tutorial_Cargar_DB_Neon.docx` con 7 pasos: creación del proyecto Neon, cadena de conexión, configurar `.env`, cargar schema con `psql`, cargar datos, migraciones y verificación.
+- Incluye sección de solución de problemas comunes (pg_hba.conf, relaciones faltantes, autenticación, IP Allow).
+
+### 3. Archivos creados
+```
+Tutorial_Cargar_DB_Neon.docx   — Tutorial Word para migrar la BD a Neon PostgreSQL
+```**
